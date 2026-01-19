@@ -1,6 +1,6 @@
-# AumLang
+# AumLang Interpreter
 
-**AumLang** is a small, interpreted programming language written in **C**.  
+**AumLang Interpreter** is a small, interpreter in **C**.  
 It is built as a learning project to explore how interpreted programming languages work.
 
 ---

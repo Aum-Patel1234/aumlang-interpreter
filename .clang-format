@@ -1,28 +1,46 @@
 BasedOnStyle: LLVM
 Language: C
 
-IndentWidth: 4
-TabWidth: 4
+# Indentation
+IndentWidth: 2
+TabWidth: 2
 UseTab: Never
 
+# Line length
 ColumnLimit: 100
 
+# Braces & blocks
 BreakBeforeBraces: Attach
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
 
+# Structs / initializers (important for you)
+BinPackParameters: false
+BinPackArguments: false
+AllowAllConstructorInitializersOnNextLine: true
+
+# Alignment
 AlignOperands: true
 AlignTrailingComments: true
 
+# Pointers
 PointerAlignment: Left
 DerivePointerAlignment: false
 
+# Spacing
 SpaceBeforeParens: ControlStatements
 
+# Includes
 SortIncludes: false
 
+# Return types
 AlwaysBreakAfterReturnType: None
-BinPackParameters: false
-BinPackArguments: false
 
+# Switch / case
 IndentCaseLabels: true
+
+# Prevent ugly compression
+PenaltyBreakAssignment: 1000
+PenaltyBreakBeforeFirstCallParameter: 1000
+PenaltyBreakString: 1000

@@ -1,0 +1,27 @@
+# IMPORTANT: Rules of aumlang(Interpreter)
+#
+# 1. aum lang works on " " means behind scenes I am doing split via " "
+# 2. func parameters are sperated by , : eg func(a,b,c) , no space for now
+# 3. keywords -> print, func, getRefCount, return
+#    getRefCount -> reference counting garbage collector
+# 4. garbage collection happens after every func stack pop or file ends
+
+a = 9
+# b = "as a"  # bug here see in func get_num_tokens
+print a
+b = a+1
+
+# func newFunc(a) {
+#   getRefCount a
+#   return a+1
+# }
+# getRefCount a
+#
+# func multiply(a,b) {
+#   return a*b
+# }
+#
+# print newFunc(a)
+#
+# c = multiply(a,b)
+# print c

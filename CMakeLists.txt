@@ -8,7 +8,7 @@ project(aumlang
     LANGUAGES C
 )
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
@@ -27,20 +27,17 @@ endif()
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 
-# Source files
-set(SOURCES
-    src/main.c
-    src/lexer.c
-    src/parser.c
+file(GLOB SRC_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
 )
 
 # Executable
-add_executable(aumlang ${SOURCES})
+add_executable(aumlang ${SRC_FILES})
 
 # Include directories
 target_include_directories(aumlang PRIVATE
     ${GLIB_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Link libraries
