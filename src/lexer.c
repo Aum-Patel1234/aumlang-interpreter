@@ -23,7 +23,7 @@ uint8_t get_num_tokens(const char* line, const char* line_end) {
   return size;
 }
 
-Array get_tokens(const char* temp, const char* line) {
+Token_Array get_tokens(const char* temp, const char* line) {
   uint8_t num_tokens = get_num_tokens(temp, line);
   fwrite(temp, sizeof(char), (size_t)(line - temp), stdout);
   printf("\t\t\t num_tokens - %d\t\t\t", num_tokens);
@@ -65,7 +65,7 @@ Array get_tokens(const char* temp, const char* line) {
   }
 
   printf("\n\n\n");
-  return (Array){0};
+  return (Token_Array){0};
 }
 
 void run_program(const char* code, unsigned long size) {
@@ -87,7 +87,7 @@ void run_program(const char* code, unsigned long size) {
       continue;
     }
 
-    Array token_array = get_tokens(p, line);
+    Token_Array token_array = get_tokens(p, line);
 
     temp = line + 1;
   }
