@@ -28,6 +28,7 @@ typedef struct token_obj {
 
 const char* token_type_to_string(token_type type);
 void print_token(const Token* token);
+void free_token(Token* token);
 
 Token get_literal_token(const char* str, size_t size);
 Token get_keyword_token(const char* str, size_t size);

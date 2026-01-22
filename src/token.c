@@ -168,3 +168,17 @@ void print_token(const Token* token) {
 
   printf("\n");
 }
+
+void free_token(Token* token) {
+  if (!token)
+    return;
+
+  if (token->variable_name)
+    free(token->variable_name);
+
+  if (token->type == LITERAL && token->literal_kind == LITERAL_STRING &&
+      token->value.string_literal)
+    free(token->value.string_literal);
+
+  free(token);
+}
