@@ -1,49 +1,43 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include<stddef.h>
+#include <../include/vector.h>
 
-void init(vector* v, size_t elem_size){
-    v->capacity = 10;
-    v->val = malloc(v->capacity * sizeof(elem_size));
-    if(v->val == NULL){
-        // TODO: handle error
-    }
-    v->len = 0;
-    v->elem_size = elem_size;
-}
-void re_init(vector* v){
-    v->capacity *= 2;
-    v->val = realloc(v->val, v->capacity * sizeof(v->elem_size));
-    if(v->val == NULL){
-        // TODO: handle err
-    }
+void vector_init(vector* v, size_t elem_size) {
+  v->capacity = INITIAL_CAPACITY;
+  v->len = 0;
+  v->elem_size = elem_size;
+  v->val = malloc(v->capacity * elem_size);
+  if (!v->val) {
+    perror("malloc failed");
+    exit(EXIT_FAILURE);
+  }
 }
 
-void add(vector* v, void* val){
-    if(v->len == v->capacity){
-        re_init(v);
-    }
-    v->val[v->len] = val;
-    v->len++;
+void vector_re_init(vector* v) {
+  v->capacity *= 2;
+  v->val = realloc(v->val, v->capacity * v->elem_size);
+  if (!v->val) {
+    perror("realloc failed");
+    exit(EXIT_FAILURE);
+  }
 }
 
-void free_vector(vector* v){
-    free(v->val);
+void vector_add(vector* v, const void* val) {
+  if (v->len == v->capacity)
+    vector_re_init(v);
+  // IMPORTANT:
+  // (char*)v->data              // treat memory as bytes
+  // + len * elem_size           // jump to next slot
+  // memcpy(..., elem, size)     // copy actual value
+  void* dest = (char*)v->val + (v->len * v->elem_size);
+  memcpy(dest, val, v->elem_size);
+  v->len++;
 }
 
-// int main(){
-//     vector v;
-//     init(&v);
+void free_vector(vector* v) {
+  free(v->val);
+  v->val = NULL;
+  v->len = v->capacity = v->elem_size = 0;
+}
 
-//     for (int i = 0; i < 13; i++) {
-//         add(&v, 1);
-//     }
-
-//     printf("%zu\t%zu\n", v.len, v.capacity);
-//     for (size_t i = 0; i < v.len; i++) {
-//         printf("%d ", v.val[i]);
-//     }
-
-//     free(v.val);
-//     return 0;
-// }
+void* vector_get(const vector* v, size_t index) {
+  return index >= v->len ? NULL : (char*)v->val + (v->elem_size * index);
+}

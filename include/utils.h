@@ -1,11 +1,16 @@
 #pragma once
 #include "token.h"
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
-void str_cpy(char* str, const char* start, size_t len) {
-  strncpy(str, start, len);
-  str[len] = '\0';
-}
+#define RED(text) "\033[31m" text "\033[0m"
+#define GREEN(text) "\033[32m" text "\033[0m"
+#define YELLOW(text) "\033[33m" text "\033[0m"
+#define BLUE(text) "\033[34m" text "\033[0m"
+#define MAGENTA(text) "\033[35m" text "\033[0m"
+#define CYAN(text) "\033[36m" text "\033[0m"
 
-uint8_t isdouble(const char* str) { return strchr(str, '.') ? 1 : 0; }
+// strcpy but adds \0 at the index len
+void str_cpy(char* str, const char* start, size_t len);
+uint8_t isdouble(const char* str);

@@ -31,6 +31,11 @@ jobs:
           cd build
           make
 
+      - name: Run tests
+        run: |
+          cd build
+          ./aumlang_test
+
       # - name: Run a sample AumLang program
       #   run: |
       #     cd build
