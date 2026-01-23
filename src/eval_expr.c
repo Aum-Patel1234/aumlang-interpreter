@@ -1,14 +1,63 @@
 #include "../include/vector.h"
 #include "../include/eval_expr.h"
-#include "../include/token.h"
+#include "glib.h"
+#include "token.h"
+#include "utils.h"
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-double calculate(char* s) {
-  double ans = 0;
+Token calculate(char* s, const GHashTable* token_map) {
   char* temp = s;
 
   vector v;
+  vector_init(&v, sizeof(Token));
   while (*temp != '\0') {
+    // leading spaces
+    while (*temp == ' ')
+      temp++;
+    if (*temp == '\0')
+      break;
+
+    const char* start = temp;
+    /* move until space or end */
+    while (*temp != ' ' && *temp != '\0')
+      temp++;
+
+    const size_t size = (size_t)(temp - start);
+    char str[size + 1];
+    str_cpy(str, start, size);
+
+    Token token;
+    if (size == 1 && is_operator(str[0]))
+      token = get_operator_token(str[0]);
+    else if (isdigit(str[0]))
+      token = get_literal_token(str, size);
+    else {
+      // its a variable
+      token = get_identifier_token(str, size);
+      Token* val = g_hash_table_lookup(token_map, &token);
+      if (!val) {
+        // handle exit if needed cause we have to free the token_map and the file_ptr
+        free_token(&token);
+        free_vector(&v);
+        perror("Variable name  not defined\n");
+        return (Token){0};
+      }
+
+      free_token(&token);
+      token = *val;
+    }
+
+    vector_add(&v, &token);
   }
+
+  print_token_vector(&v);
+
+  Token ans = prat_parser(&v);
+  free_vector(&v);
 
   return ans;
 }
+
+Token prat_parser(const vector* v) { return (Token){0}; }

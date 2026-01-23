@@ -14,3 +14,4 @@
 // strcpy but adds \0 at the index len
 void str_cpy(char* str, const char* start, size_t len);
 uint8_t isdouble(const char* str);
+uint8_t is_operator(char ch);

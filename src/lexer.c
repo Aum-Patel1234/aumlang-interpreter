@@ -1,8 +1,10 @@
 #include "../include/lexer.h"
 #include <../include/eval_expr.h>
+#include <../include/map.h>
 #include "glib.h"
 #include "token.h"
 #include "vector.h"
+#include <assert.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -75,8 +77,9 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
       size_t lhs_size = (size_t)(lhs_end - line_start); // - 1 for the space before =
 
       char lhs[lhs_size + 1];
-      memcmp(lhs, line_start, lhs_size);
+      memcpy(lhs, line_start, lhs_size);
       lhs[lhs_size] = '\0';
+      Token lhs_token = get_identifier_token(lhs, lhs_size);
 
       const char* rhs_start = next + 1;
       while (*rhs_start == ' ')
@@ -85,10 +88,16 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
       // RHS
       size_t rhs_size = (size_t)(line_end - rhs_start);
       char rhs[rhs_size + 1];
-      memcmp(rhs, rhs_start, rhs_size);
+      memcpy(rhs, rhs_start, rhs_size);
       rhs[rhs_size] = '\0';
 
-      double val = calculate(rhs);
+      // double val = calculate(rhs, token_map);
+      Token val = calculate(rhs, token_map);
+      insert_hash_map(token_map, &lhs_token, &val);
+
+      free_token(&lhs_token);
+      free_token(&val);
+      // printf("\npression val = %f", val);
     }
   }
 
@@ -97,7 +106,7 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
 
 void run_program(const char* code, unsigned long size) {
   const char* temp = code;
-  GHashTable* token_map = g_hash_table_new(g_direct_hash, g_direct_equal);
+  GHashTable* token_map = init_hash_map();
 
   while (*temp) {
     const char* line = get_line(temp);
@@ -120,11 +129,5 @@ void run_program(const char* code, unsigned long size) {
     temp = line + 1;
   }
 
-  GHashTableIter iter;
-  gpointer key, val;
-  g_hash_table_iter_init(&iter, token_map);
-  while (g_hash_table_iter_next(&iter, key, val)) {
-    free_token(key);
-    free_token(val);
-  }
+  free_hash_map(token_map);
 }

@@ -1,11 +1,6 @@
 #include "../include/token.h"
 #include "../include/utils.h"
 #include "../include/keywords.h"
-#include <ctype.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 void set_token_value(
     Token* token, token_type type, literal_type literal, token_value value, char* variable_name) {
@@ -180,5 +175,53 @@ void free_token(Token* token) {
       token->value.string_literal)
     free(token->value.string_literal);
 
-  free(token);
+  // NOTE: handle on the creation side cause its not confirmed its malloced
+  // free(token);
+}
+
+void token_deep_copy(Token* dst, const Token* src) {
+  memset(dst, 0, sizeof(*dst));
+
+  dst->type = src->type;
+  dst->literal_kind = src->literal_kind;
+
+  // identifier
+  if (src->type == IDENTIFIER && src->variable_name) {
+    dst->variable_name = strdup(src->variable_name);
+    if (!dst->variable_name) {
+      perror("strdup failed");
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    dst->variable_name = NULL;
+  }
+
+  dst->value = src->value;
+
+  // deep copy string literal
+  if (src->type == LITERAL && src->literal_kind == LITERAL_STRING && src->value.string_literal) {
+    dst->value.string_literal = strdup(src->value.string_literal);
+    if (!dst->value.string_literal) {
+      perror("strdup failed");
+      exit(EXIT_FAILURE);
+    }
+  }
+}
+
+void print_token_vector(const vector* v) {
+  if (!v || v->len == 0) {
+    printf("<empty vector>\n");
+    return;
+  }
+
+  printf("Vector contents (size = %zu):\n", v->len);
+  for (size_t i = 0; i < v->len; ++i) {
+    Token* t = (Token*)vector_get(v, i);
+    if (t) {
+      printf("[%zu]: ", i);
+      print_token(t);
+    } else {
+      printf("[%zu]: NULL\n", i);
+    }
+  }
 }

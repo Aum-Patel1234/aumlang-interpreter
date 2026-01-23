@@ -1,12 +1,14 @@
 #pragma once
+#include "vector.h"
 #include <stddef.h>
+#include <ctype.h>
 
 typedef enum Tokens {
   INVALID_TOKEN = 0,
   KEYWORD,
   IDENTIFIER,
   LITERAL,
-  OPERATOR, // only support +,-,/,*
+  OPERATOR, // only support +,-,/,*,(,)
   PUNCTUATOR,
 } token_type;
 
@@ -29,6 +31,8 @@ typedef struct token_obj {
 const char* token_type_to_string(token_type type);
 void print_token(const Token* token);
 void free_token(Token* token);
+void token_deep_copy(Token* dst, const Token* src);
+void print_token_vector(const vector* v);
 
 Token get_literal_token(const char* str, size_t size);
 Token get_keyword_token(const char* str, size_t size);

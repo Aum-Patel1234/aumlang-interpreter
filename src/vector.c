@@ -11,6 +11,17 @@ void vector_init(vector* v, size_t elem_size) {
   }
 }
 
+void vector_init_with_capacity(vector* v, size_t elem_size, size_t initial_capactiy) {
+  v->capacity = initial_capactiy;
+  v->len = 0;
+  v->elem_size = elem_size;
+  v->val = malloc(v->capacity * elem_size);
+  if (!v->val) {
+    perror("malloc failed");
+    exit(EXIT_FAILURE);
+  }
+}
+
 void vector_re_init(vector* v) {
   v->capacity *= 2;
   v->val = realloc(v->val, v->capacity * v->elem_size);

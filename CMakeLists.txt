@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-
+add_compile_definitions(_POSIX_C_SOURCE=200809L)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(aumlang
