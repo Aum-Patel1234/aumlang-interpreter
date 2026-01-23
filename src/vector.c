@@ -1,4 +1,6 @@
 #include <../include/vector.h>
+#include <stdlib.h>
+#include <string.h>
 
 void vector_init(vector* v, size_t elem_size) {
   v->capacity = INITIAL_CAPACITY;
@@ -41,6 +43,28 @@ void vector_add(vector* v, const void* val) {
   void* dest = (char*)v->val + (v->len * v->elem_size);
   memcpy(dest, val, v->elem_size);
   v->len++;
+}
+
+void vector_reverse(vector* v) {
+  size_t elem_size = v->elem_size, len = v->len;
+  char* data = (char*)v->val;
+
+  void* temp = malloc(elem_size);
+  if (!temp) {
+    perror("malloc failed");
+    return;
+  }
+
+  for (size_t i = 0; i < len / 2; ++i) {
+    char* left = data + i * elem_size;
+    char* right = data + (len - i - 1) * elem_size;
+
+    memcpy(temp, left, elem_size);
+    memcpy(left, right, elem_size);
+    memcpy(right, temp, elem_size);
+  }
+
+  free(temp);
 }
 
 void free_vector(vector* v) {

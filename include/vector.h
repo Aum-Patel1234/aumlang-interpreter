@@ -15,5 +15,6 @@ void vector_init(vector* v, size_t elem_size);
 void vector_init_with_capacity(vector* v, size_t elem_size, size_t initial_capactiy);
 void vector_re_init(vector* v);
 void vector_add(vector* v, const void* val);
+void vector_reverse(vector* v);
 void free_vector(vector* v);
 void* vector_get(const vector* v, size_t index);

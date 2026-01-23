@@ -121,6 +121,61 @@ void test_out_of_bounds(void) {
   TEST_PASS();
 }
 
+void test_vector_reverse_int(void) {
+  TEST_START("vector reverse (int)");
+
+  vector v;
+  vector_init(&v, sizeof(int));
+
+  for (int i = 0; i < 10; i++) {
+    vector_add(&v, &i); // [0 1 2 3 4 5 6 7 8 9]
+  }
+
+  vector_reverse(&v); // [9 8 7 6 5 4 3 2 1 0]
+
+  for (int i = 0; i < 10; i++) {
+    int* val = (int*)vector_get(&v, i);
+    assert(val != NULL);
+    assert(*val == 9 - i);
+  }
+
+  free_vector(&v);
+  TEST_PASS();
+}
+
+void test_vector_reverse_struct(void) {
+  TEST_START("vector reverse (struct)");
+
+  vector v;
+  vector_init(&v, sizeof(Person));
+
+  Person p1 = {1, "Alice"};
+  Person p2 = {2, "Bob"};
+  Person p3 = {3, "Charlie"};
+
+  vector_add(&v, &p1);
+  vector_add(&v, &p2);
+  vector_add(&v, &p3);
+
+  vector_reverse(&v);
+
+  Person* r0 = (Person*)vector_get(&v, 0);
+  Person* r1 = (Person*)vector_get(&v, 1);
+  Person* r2 = (Person*)vector_get(&v, 2);
+
+  assert(r0->id == 3);
+  assert(strcmp(r0->name, "Charlie") == 0);
+
+  assert(r1->id == 2);
+  assert(strcmp(r1->name, "Bob") == 0);
+
+  assert(r2->id == 1);
+  assert(strcmp(r2->name, "Alice") == 0);
+
+  free_vector(&v);
+  TEST_PASS();
+}
+
 /* ---------- Main ---------- */
 
 int main(void) {
@@ -131,6 +186,9 @@ int main(void) {
   test_struct_vector();
   test_pointer_vector();
   test_out_of_bounds();
+
+  test_vector_reverse_int();
+  test_vector_reverse_struct();
 
   printf("\n%s\n", GREEN("All tests passed"));
   return 0;

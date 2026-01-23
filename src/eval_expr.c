@@ -53,6 +53,7 @@ Token calculate(char* s, const GHashTable* token_map) {
   }
 
   print_token_vector(&v);
+  vector_reverse(&v);
 
   Token ans = prat_parser(&v);
   free_vector(&v);
@@ -61,3 +62,12 @@ Token calculate(char* s, const GHashTable* token_map) {
 }
 
 Token prat_parser(const vector* v) { return (Token){0}; }
+
+float_pair infix_binding_power(char ch) {
+  if (ch == '=')
+    return (float_pair){.lhs = (float)0.2, .rhs = (float)0.1};
+  if (ch == '+' || ch == '-')
+    return (float_pair){.lhs = (float)1.0, .rhs = (float)1.1};
+  // if(ch == '*' || ch == '/')
+  return (float_pair){.lhs = (float)2.0, .rhs = (float)2.1};
+}
