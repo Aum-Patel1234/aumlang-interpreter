@@ -1,6 +1,10 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include "eval_expr.h"
+#include "map.h"
+#include "token.h"
 #include "utils.h"
 #include "vector.h"
 
@@ -23,10 +27,10 @@ void test_int_vector(void) {
 
   assert(v.len == 100);
 
-  for (int i = 0; i < 100; i++) {
+  for (size_t i = 0; i < 100; i++) {
     int* val = (int*)vector_get(&v, i);
     assert(val != NULL);
-    assert(*val == i);
+    assert(*val == (int)i);
   }
 
   free_vector_custom(&v, NULL);
@@ -44,10 +48,10 @@ void test_double_vector(void) {
     vector_add(&v, &x);
   }
 
-  for (int i = 0; i < 50; i++) {
+  for (size_t i = 0; i < 50; i++) {
     double* val = (double*)vector_get(&v, i);
     assert(val != NULL);
-    assert(*val == i * 0.5);
+    assert(*val == (double)i * 0.5);
   }
 
   free_vector_custom(&v, NULL);
@@ -133,10 +137,10 @@ void test_vector_reverse_int(void) {
 
   vector_reverse(&v); // [9 8 7 6 5 4 3 2 1 0]
 
-  for (int i = 0; i < 10; i++) {
+  for (size_t i = 0; i < 10; i++) {
     int* val = (int*)vector_get(&v, i);
     assert(val != NULL);
-    assert(*val == 9 - i);
+    assert(*val == 9 - (int)i);
   }
 
   free_vector_custom(&v, NULL);
@@ -176,6 +180,41 @@ void test_vector_reverse_struct(void) {
   TEST_PASS();
 }
 
+void test_calculate_expressions(void) {
+  TEST_START("calculate: multiple expressions");
+
+  GHashTable* token_map = init_hash_map();
+
+  struct {
+    const char* expr;
+    double expected;
+  } cases[] = {{"8+23-1", 30.0},
+               {"2+3*4", 14.0},
+               {"(2+3)*4", 20.0},
+               {"10-4-3", 3.0},
+               {"10-(4-3)", 9.0},
+               {"6/2+1", 4.0},
+               {"6/(2+1)", 2.0},
+               {"(1+2)*(3+4)", 21.0},
+               {"42", 42.0},
+               {"-42", -42.0},
+               {"(1+2)*(-3+4)", 3.0},
+               {"((5))", 5.0}};
+
+  for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+    Token result = calculate((char*)cases[i].expr, token_map);
+
+    assert(result.type == LITERAL);
+    assert(result.literal_kind == LITERAL_DOUBLE);
+    assert(result.value.double_value == cases[i].expected);
+
+    free_static_token(&result);
+  }
+
+  free_hash_map(token_map);
+  TEST_PASS();
+}
+
 /* ---------- Main ---------- */
 
 int main(void) {
@@ -189,6 +228,7 @@ int main(void) {
 
   test_vector_reverse_int();
   test_vector_reverse_struct();
+  test_calculate_expressions();
 
   printf("\n%s\n", GREEN("All tests passed"));
   return 0;

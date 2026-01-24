@@ -8,3 +8,4 @@ guint token_hash(gconstpointer key);
 GHashTable* init_hash_map(void);
 void free_hash_map(GHashTable* token_map);
 void insert_hash_map(GHashTable* token_map, Token* key, Token* val);
+void print_hash_map(const GHashTable* token_map);

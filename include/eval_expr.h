@@ -8,5 +8,8 @@ typedef struct pair {
   float lhs, rhs;
 } float_pair;
 
-Token calculate(char* s, const GHashTable* token_map);
-Token prat_parser(const vector* v);
+Token calculate(char* s, GHashTable* token_map);
+// returns result of the valid expression in double precision
+Token prat_parser(vector* v, float min_bp);
+float_pair infix_binding_power(char ch);
+Token operation(Token* lhs, char op, Token* rhs);

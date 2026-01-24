@@ -32,7 +32,7 @@ uint8_t get_num_tokens(const char* line, const char* line_end) {
 void process_line(const char* line_start, const char* line_end, GHashTable* token_map) {
   uint8_t num_tokens = get_num_tokens(line_start, line_end);
   fwrite(line_start, sizeof(char), (size_t)(line_end - line_start), stdout);
-  printf("\t\t\t num_tokens - %d\t\t\t", num_tokens);
+  printf("\n");
 
   // NOTE: for now I am just doing for atmost 3 and not AST(Abstract Syntax Tree)
   switch (num_tokens) {
@@ -57,9 +57,9 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
       else
         value_token = get_identifier_token(value_start, value_len);
 
-      printf("\n");
-      print_token(&keyword_token);
-      print_token(&value_token);
+      // printf("\n");
+      // print_token(&keyword_token);
+      // print_token(&value_token);
       free_static_token(&keyword_token);
       free_static_token(&value_token);
       break;
@@ -81,7 +81,14 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
       char lhs[lhs_size + 1];
       memcpy(lhs, line_start, lhs_size);
       lhs[lhs_size] = '\0';
+      // printf("DEBUG: LHS string: '%s' (size=%zu)\n", lhs, lhs_size);
+      // printf("DEBUG: LHS bytes: ");
       Token lhs_token = get_identifier_token(lhs, lhs_size);
+      // printf("DEBUG: after get_identifier_token -> token.type=%d variable_name='%s'\n",
+      //        lhs_token.type,
+      //        lhs_token.variable_name ? lhs_token.variable_name : "(null)");
+      // printf("%s", lhs);
+      // print_token(&lhs_token);
 
       const char* rhs_start = next + 1;
       while (*rhs_start == ' ')
@@ -95,6 +102,7 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
 
       // double val = calculate(rhs, token_map);
       Token val = calculate(rhs, token_map);
+      // print_token(&val);
       insert_hash_map(token_map, &lhs_token, &val);
 
       free_static_token(&lhs_token);
@@ -103,7 +111,7 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
     }
   }
 
-  printf("\n\n\n");
+  // printf("\n\n\n");
 }
 
 void run_program(const char* code, unsigned long size) {
@@ -131,5 +139,7 @@ void run_program(const char* code, unsigned long size) {
     temp = line + 1;
   }
 
+  printf("\n\n");
+  print_hash_map(token_map);
   free_hash_map(token_map);
 }

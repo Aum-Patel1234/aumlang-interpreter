@@ -1,8 +1,5 @@
 #include "token.h"
 #include <../include/vector.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
 
 void vector_init(vector* v, size_t elem_size) {
   v->capacity = INITIAL_CAPACITY;
@@ -71,12 +68,20 @@ void vector_reverse(vector* v) {
 
 // NOTE: this func is not general only for Token*
 void vector_pop_back_token(vector* v) {
+  Token* last_elem = (Token*)back(v);
+  if (last_elem) {
+    free_static_token(last_elem);
+    v->len--;
+  }
+}
+
+uint8_t is_empty(const vector* v) { return v->len == 0; }
+
+void* back(const vector* v) {
   if (v->len == 0)
-    return;
+    return NULL;
   char* data = (char*)v->val;
-  Token* last_elem = (Token*)(data + (v->len - 1) * v->elem_size);
-  free_static_token(last_elem);
-  v->len--;
+  return data + (v->len - 1) * v->elem_size;
 }
 
 // NOTE: element_free_fn should take one argument and free the indivisual elements

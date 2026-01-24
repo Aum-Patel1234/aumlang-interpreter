@@ -54,3 +54,22 @@ void insert_hash_map(GHashTable* token_map, Token* key, Token* val) {
   token_deep_copy(val_copy, val);
   g_hash_table_insert(token_map, key_copy, val_copy);
 }
+
+static void print_token_map_entry(gpointer key, gpointer value, gpointer user_data) {
+  Token* val = (Token*)value;
+  Token* k = (Token*)key;
+  print_token(k);
+  print_token(val);
+  printf("\n");
+}
+
+void print_hash_map(const GHashTable* token_map) {
+  if (!token_map) {
+    printf("Hash table is empty.\n");
+    return;
+  }
+
+  printf("=========== Token Map =========\n\n");
+  g_hash_table_foreach((GHashTable*)token_map, print_token_map_entry, NULL);
+  printf("===============================\n");
+}
