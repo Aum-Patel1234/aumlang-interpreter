@@ -164,19 +164,25 @@ void print_token(const Token* token) {
   printf("\n");
 }
 
-void free_token(Token* token) {
+void free_static_token(Token* token) {
   if (!token)
     return;
 
-  if (token->variable_name)
+  if (token->variable_name) {
     free(token->variable_name);
+    token->variable_name = NULL;
+  }
 
   if (token->type == LITERAL && token->literal_kind == LITERAL_STRING &&
-      token->value.string_literal)
+      token->value.string_literal) {
     free(token->value.string_literal);
+    token->value.string_literal = NULL;
+  }
+}
 
-  // NOTE: handle on the creation side cause its not confirmed its malloced
-  // free(token);
+void free_dynamic_token(Token* token) {
+  free_static_token(token);
+  free(token);
 }
 
 void token_deep_copy(Token* dst, const Token* src) {

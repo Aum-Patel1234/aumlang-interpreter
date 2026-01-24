@@ -35,37 +35,41 @@ Token calculate(char* s, const GHashTable* token_map) {
       token = get_literal_token(str, size);
     else {
       // its a variable
-      token = get_identifier_token(str, size);
-      Token* val = g_hash_table_lookup(token_map, &token);
+      Token lookup = get_identifier_token(str, size);
+      Token* val = g_hash_table_lookup(token_map, &lookup);
+      free_static_token(&lookup);
       if (!val) {
         // handle exit if needed cause we have to free the token_map and the file_ptr
-        free_token(&token);
-        free_vector(&v);
+        free_vector_custom(&v, (element_free_fn)free_static_token);
         perror("Variable name  not defined\n");
         return (Token){0};
       }
 
-      free_token(&token);
-      token = *val;
+      token_deep_copy(&token, val);
+      // token = *val;
     }
 
     vector_add(&v, &token);
   }
 
   print_token_vector(&v);
+  // easy to pop_back
   vector_reverse(&v);
 
   Token ans = prat_parser(&v);
-  free_vector(&v);
+  free_vector_custom(&v, (element_free_fn)free_static_token);
 
   return ans;
 }
 
-Token prat_parser(const vector* v) { return (Token){0}; }
+Token prat_parser(const vector* v) {
+  Token t = {0};
+  return t;
+}
 
 float_pair infix_binding_power(char ch) {
-  if (ch == '=')
-    return (float_pair){.lhs = (float)0.2, .rhs = (float)0.1};
+  // if (ch == '=')
+  //   return (float_pair){.lhs = (float)0.2, .rhs = (float)0.1};
   if (ch == '+' || ch == '-')
     return (float_pair){.lhs = (float)1.0, .rhs = (float)1.1};
   // if(ch == '*' || ch == '/')

@@ -30,7 +30,8 @@ typedef struct token_obj {
 
 const char* token_type_to_string(token_type type);
 void print_token(const Token* token);
-void free_token(Token* token);
+void free_static_token(Token* token);
+void free_dynamic_token(Token* token);
 void token_deep_copy(Token* dst, const Token* src);
 void print_token_vector(const vector* v);
 

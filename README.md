@@ -35,3 +35,12 @@ make
 ```bash
 ln -sf build/compile_commands.json .
 ```
+
+---
+
+### Address Sanitizer
+
+```bash
+valgrind ./aumlang ../file.aum
+valgrind --leak-check=full --show-leak-kinds=all ./aumlang ../file.aum
+```

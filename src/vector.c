@@ -1,4 +1,6 @@
+#include "token.h"
 #include <../include/vector.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -67,11 +69,46 @@ void vector_reverse(vector* v) {
   free(temp);
 }
 
-void free_vector(vector* v) {
+// NOTE: this func is not general only for Token*
+void vector_pop_back_token(vector* v) {
+  if (v->len == 0)
+    return;
+  char* data = (char*)v->val;
+  Token* last_elem = (Token*)(data + (v->len - 1) * v->elem_size);
+  free_static_token(last_elem);
+  v->len--;
+}
+
+// NOTE: element_free_fn should take one argument and free the indivisual elements
+void free_vector_custom(vector* v, element_free_fn free_elem) {
+  if (!v || !v->val)
+    return;
+
+  char* data = (char*)v->val;
+  if (free_elem) {
+    for (size_t i = 0; i < v->len; ++i) {
+      void* elem = data + i * v->elem_size;
+      free_elem(elem); // call user-provided free function
+    }
+  }
+
   free(v->val);
   v->val = NULL;
   v->len = v->capacity = v->elem_size = 0;
 }
+
+// void free_vector(vector* v) {
+//   if (!v || !v->val)
+//     return;
+//   char* data = (char*)v->val;
+//   for (size_t i = 0; i < v->len; ++i) {
+//     Token* t = (Token*)(data + i * v->elem_size);
+//     free_static_token(t);
+//   }
+//   free(v->val);
+//   v->val = NULL;
+//   v->len = v->capacity = v->elem_size = 0;
+// }
 
 void* vector_get(const vector* v, size_t index) {
   return index >= v->len ? NULL : (char*)v->val + (v->elem_size * index);

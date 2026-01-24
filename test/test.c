@@ -29,7 +29,7 @@ void test_int_vector(void) {
     assert(*val == i);
   }
 
-  free_vector(&v);
+  free_vector_custom(&v, NULL);
   TEST_PASS();
 }
 
@@ -50,7 +50,7 @@ void test_double_vector(void) {
     assert(*val == i * 0.5);
   }
 
-  free_vector(&v);
+  free_vector_custom(&v, NULL);
   TEST_PASS();
 }
 
@@ -79,7 +79,7 @@ void test_struct_vector(void) {
   assert(r2->id == 2);
   assert(strcmp(r2->name, "Bob") == 0);
 
-  free_vector(&v);
+  free_vector_custom(&v, NULL);
   TEST_PASS();
 }
 
@@ -101,7 +101,7 @@ void test_pointer_vector(void) {
   assert(strcmp(*r1, "hello") == 0);
   assert(strcmp(*r2, "world") == 0);
 
-  free_vector(&v);
+  free_vector_custom(&v, NULL);
   TEST_PASS();
 }
 
@@ -117,7 +117,7 @@ void test_out_of_bounds(void) {
   assert(vector_get(&v, 1) == NULL);
   assert(vector_get(&v, 100) == NULL);
 
-  free_vector(&v);
+  free_vector_custom(&v, NULL);
   TEST_PASS();
 }
 
@@ -139,7 +139,7 @@ void test_vector_reverse_int(void) {
     assert(*val == 9 - i);
   }
 
-  free_vector(&v);
+  free_vector_custom(&v, NULL);
   TEST_PASS();
 }
 
@@ -172,7 +172,7 @@ void test_vector_reverse_struct(void) {
   assert(r2->id == 1);
   assert(strcmp(r2->name, "Alice") == 0);
 
-  free_vector(&v);
+  free_vector_custom(&v, NULL);
   TEST_PASS();
 }
 

@@ -10,6 +10,7 @@ a = 9
 # b = "as a"  # bug here see in func get_num_tokens
 print a
 b = 9 + 1
+b = 10 + 11 * 5 + 1
 
 # func newFunc(a) {
 #   getRefCount a

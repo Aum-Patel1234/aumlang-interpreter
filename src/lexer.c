@@ -60,6 +60,8 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
       printf("\n");
       print_token(&keyword_token);
       print_token(&value_token);
+      free_static_token(&keyword_token);
+      free_static_token(&value_token);
       break;
     }
     default: {
@@ -95,8 +97,8 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
       Token val = calculate(rhs, token_map);
       insert_hash_map(token_map, &lhs_token, &val);
 
-      free_token(&lhs_token);
-      free_token(&val);
+      free_static_token(&lhs_token);
+      free_static_token(&val);
       // printf("\npression val = %f", val);
     }
   }

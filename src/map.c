@@ -34,8 +34,8 @@ void free_hash_map(GHashTable* token_map) {
 
   g_hash_table_iter_init(&iter, token_map);
   while (g_hash_table_iter_next(&iter, &key, &val)) {
-    free_token(key);
-    free_token(val);
+    free_dynamic_token(key);
+    free_dynamic_token(val);
   }
 
   g_hash_table_destroy(token_map);
