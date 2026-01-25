@@ -1,0 +1,96 @@
+name: Release AumLang
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Linux dependencies
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake libglib2.0-dev
+
+      # Windows dependencies
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install -y cmake mingw pkgconfiglite
+
+      # macOS dependencies
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install cmake glib pkg-config
+
+      # Configure
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+
+      # Build
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+
+      # Package Linux
+      - name: Package Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir dist
+          cp build/aumlang dist/
+          tar -czf aumlang-linux.tar.gz -C dist .
+
+      # Package macOS
+      - name: Package macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          mkdir dist
+          cp build/aumlang dist/
+          tar -czf aumlang-macos.tar.gz -C dist .
+
+      # Package Windows
+      - name: Package Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          mkdir dist
+          cp build/aumlang.exe dist/
+
+          # Runtime DLLs (best-effort)
+          cp /mingw64/bin/libglib-2.0-0.dll dist/ || true
+          cp /mingw64/bin/libintl-8.dll dist/ || true
+          cp /mingw64/bin/libiconv-2.dll dist/ || true
+          cp /mingw64/bin/libgcc_s_seh-1.dll dist/ || true
+          cp /mingw64/bin/libstdc++-6.dll dist/ || true
+
+          zip -r aumlang-windows.zip dist
+
+      # Create GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            aumlang-linux.tar.gz
+            aumlang-macos.tar.gz
+            aumlang-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
