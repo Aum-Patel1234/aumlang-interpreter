@@ -1,4 +1,17 @@
+#pragma once
+
 #include "glib.h"
+#include "eval_expr.h"
+#include "map.h"
+#include "token.h"
+#include "glib.h"
+#include <assert.h>
+#include <ctype.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 #define NEW_LINE '\n'
 #define COMMENT_TAG '#'

@@ -1,3 +1,4 @@
+#pragma once
 #include <stddef.h>
 
 static const char* KEYWORD_STRINGS[] = {"print", "func", "return", "getRefCount"};

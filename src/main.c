@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "../include/lexer.h"
 #include "../include/map.h"
-#include "cli.h"
+#include "../include/cli.h"
 
 int main(int argv, char* argc[]) {
   if (argv > 2) {

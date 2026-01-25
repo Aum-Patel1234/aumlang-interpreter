@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include "eval_expr.h"
-#include "map.h"
-#include "token.h"
-#include "utils.h"
-#include "vector.h"
+#include "../include/eval_expr.h"
+#include "../include/map.h"
+#include "../include/token.h"
+#include "../include/utils.h"
+#include "../include/vector.h"
 
 /* ---------- Test helpers ---------- */
 

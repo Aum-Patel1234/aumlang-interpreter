@@ -1,6 +1,10 @@
+#pragma once
+
 #include "glib.h"
-#include "glibconfig.h"
-#include "token.h"
+#include "glib.h"
+#include "../include/token.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 gboolean token_equal(gconstpointer a, gconstpointer b);

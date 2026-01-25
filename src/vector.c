@@ -1,5 +1,5 @@
-#include "token.h"
-#include <../include/vector.h>
+#include "../include/vector.h"
+#include "../include/token.h"
 
 void vector_init(vector* v, size_t elem_size) {
   v->capacity = INITIAL_CAPACITY;

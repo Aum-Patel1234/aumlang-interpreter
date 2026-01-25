@@ -1,12 +1,4 @@
-#include "../include/vector.h"
 #include "../include/eval_expr.h"
-#include "glib.h"
-#include "token.h"
-#include "utils.h"
-#include <ctype.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 Token calculate(char* s, GHashTable* token_map) {
   char* temp = s;

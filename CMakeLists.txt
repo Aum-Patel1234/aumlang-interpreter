@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 add_compile_definitions(_POSIX_C_SOURCE=200809L)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_BUILD_TYPE Debug)
 
 project(aumlang
     VERSION 0.1.0
@@ -26,7 +25,7 @@ endif()
 
 # Find GLib
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GLIB REQUIRED glib-2.0)
+pkg_check_modules(GLIB REQUIRED IMPORTED_TARGET glib-2.0)
 
 
 file(GLOB TEST_FILES
@@ -46,28 +45,5 @@ add_executable(aumlang_test
     ${TEST_FILES}
 )
 
-# Include directories
-target_include_directories(aumlang PRIVATE
-    ${GLIB_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-target_include_directories(aumlang_test PRIVATE
-    ${GLIB_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
-# Link libraries
-target_link_libraries(aumlang PRIVATE
-    ${GLIB_LIBRARIES}
-)
-target_link_libraries(aumlang_test PRIVATE
-    ${GLIB_LIBRARIES}
-)
-
-# Extra flags from pkg-config
-target_compile_options(aumlang PRIVATE
-    ${GLIB_CFLAGS_OTHER}
-)
-target_compile_options(aumlang_test PRIVATE
-    ${GLIB_CFLAGS_OTHER}
-)
+target_link_libraries(aumlang PRIVATE PkgConfig::GLIB)
+target_link_libraries(aumlang_test PRIVATE PkgConfig::GLIB)

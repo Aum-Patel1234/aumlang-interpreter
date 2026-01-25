@@ -1,16 +1,4 @@
 #include "../include/lexer.h"
-#include <../include/eval_expr.h>
-#include <../include/map.h>
-#include "glib.h"
-#include "token.h"
-#include "vector.h"
-#include <assert.h>
-#include <ctype.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 char* get_line(const char* code) { return strchr(code, NEW_LINE); }
 

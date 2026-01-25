@@ -1,6 +1,13 @@
+#pragma once
+
 #include "glib.h"
-#include "token.h"
+#include <ctype.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "vector.h"
+#include "token.h"
+#include "utils.h"
 #include <stdint.h>
 #include <stddef.h>
 

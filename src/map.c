@@ -1,9 +1,4 @@
 #include "../include/map.h"
-#include "glib.h"
-#include "token.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 gboolean token_equal(gconstpointer a, gconstpointer b) {
   const Token *t1 = a, *t2 = b;
