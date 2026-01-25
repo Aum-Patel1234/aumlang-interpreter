@@ -11,7 +11,7 @@ a = 9
 print a
 b = 9 + 1
 b = 10 + 11 * 5 + 1
-
+print b9
 # func newFunc(a) {
 #   getRefCount a
 #   return a+1

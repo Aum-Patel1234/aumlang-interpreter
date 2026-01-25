@@ -2,11 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/lexer.h"
+#include "../include/map.h"
+#include "cli.h"
 
 int main(int argv, char* argc[]) {
   if (argv > 2) {
     printf("It only accepts 2 args, 1st the execuatble and 2nd the file name.\n");
     return 1;
+  }
+
+  GHashTable* token_map = init_hash_map();
+  if (argv == 1) {
+    run_cli(token_map);
+
+    print_hash_map(token_map);
+    free_hash_map(token_map);
+    return 0;
   }
 
   const char* file_name = argc[1];
@@ -31,30 +42,12 @@ int main(int argv, char* argc[]) {
   fread(file_content, 1, size, file);
   file_content[size] = '\0';
 
-  run_program(file_content, size + 1);
+  run_program(file_content, size + 1, token_map);
+  print_hash_map(token_map);
 
+  free_hash_map(token_map);
   free(file_content);
   fclose(file);
 
-  // printf("Welcone to Aumlang CLI\n");
-  //
-  // char input[256];
-  // while (1) {
-  //     printf("aum > ");
-  //
-  //     if (!fgets(input, sizeof(input), stdin))
-  //         break;
-  //
-  //     size_t len = strlen(input);
-  //     // check for enter key
-  //     if (len > 0 && input[len - 1] == '\n')
-  //         input[len - 1] = '\0';
-  //
-  //     if (strcmp(input, "exit") == 0)
-  //         break;
-  //
-  //     printf("You typed: %s\n", input);
-  // }
-  //
   return 0;
 }

@@ -6,5 +6,5 @@
 
 uint8_t get_num_tokens(const char* line, const char* line_end);
 void process_line(const char* line_start, const char* line_end, GHashTable* token_map);
-void run_program(const char* code, unsigned long size);
+void run_program(const char* code, unsigned long size, GHashTable* token_map);
 char* get_line(const char* code);

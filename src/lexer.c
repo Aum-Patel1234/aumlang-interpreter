@@ -31,8 +31,8 @@ uint8_t get_num_tokens(const char* line, const char* line_end) {
 
 void process_line(const char* line_start, const char* line_end, GHashTable* token_map) {
   uint8_t num_tokens = get_num_tokens(line_start, line_end);
-  fwrite(line_start, sizeof(char), (size_t)(line_end - line_start), stdout);
-  printf("\n");
+  // fwrite(line_start, sizeof(char), (size_t)(line_end - line_start), stdout);
+  // printf("\n");
 
   // NOTE: for now I am just doing for atmost 3 and not AST(Abstract Syntax Tree)
   switch (num_tokens) {
@@ -57,6 +57,13 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
       else
         value_token = get_identifier_token(value_start, value_len);
 
+      if (value_token.type == IDENTIFIER) {
+        Token* val = (Token*)g_hash_table_lookup(token_map, &value_token);
+        printf("%f\n", val->value.double_value);
+      } else {
+        fwrite(value_start, 1, value_len, stdout);
+        printf("\n");
+      }
       // printf("\n");
       // print_token(&keyword_token);
       // print_token(&value_token);
@@ -114,9 +121,8 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
   // printf("\n\n\n");
 }
 
-void run_program(const char* code, unsigned long size) {
+void run_program(const char* code, unsigned long size, GHashTable* token_map) {
   const char* temp = code;
-  GHashTable* token_map = init_hash_map();
 
   while (*temp) {
     const char* line = get_line(temp);
@@ -139,7 +145,5 @@ void run_program(const char* code, unsigned long size) {
     temp = line + 1;
   }
 
-  printf("\n\n");
-  print_hash_map(token_map);
-  free_hash_map(token_map);
+  // printf("\n\n");
 }
