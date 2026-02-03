@@ -15,6 +15,8 @@ typedef enum Tokens {
 
 typedef enum { LITERAL_INT, LITERAL_DOUBLE, LITERAL_STRING, LITERAL_CHAR } literal_type;
 
+typedef enum { if, else, while, for} keywords;
+
 typedef union token_value { // good use of union
   int int_value;
   double double_value;

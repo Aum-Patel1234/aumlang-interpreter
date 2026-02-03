@@ -15,3 +15,4 @@
 void str_cpy(char* str, const char* start, size_t len);
 uint8_t isdouble(const char* str);
 uint8_t is_operator(char ch);
+char* evaluate_between_parenthesis(const char* begin, const char* end);
