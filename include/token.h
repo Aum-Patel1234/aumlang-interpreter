@@ -2,7 +2,6 @@
 
 #include "vector.h"
 #include <stddef.h>
-#include <ctype.h>
 
 typedef enum Tokens {
   INVALID_TOKEN = 0,
@@ -14,8 +13,6 @@ typedef enum Tokens {
 } token_type;
 
 typedef enum { LITERAL_INT, LITERAL_DOUBLE, LITERAL_STRING, LITERAL_CHAR } literal_type;
-
-typedef enum { if, else, while, for} keywords;
 
 typedef union token_value { // good use of union
   int int_value;

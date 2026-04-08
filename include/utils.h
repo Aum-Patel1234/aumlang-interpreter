@@ -15,4 +15,5 @@
 void str_cpy(char* str, const char* start, size_t len);
 uint8_t isdouble(const char* str);
 uint8_t is_operator(char ch);
-char* evaluate_between_parenthesis(const char* begin, const char* end);
+uint8_t evaluate_between_parenthesis(const char* begin, const char* end);
+Token get_conditional_operator_token(const char* start, const char* end);

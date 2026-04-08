@@ -23,6 +23,7 @@ void process_line(const char* line_start, const char* line_end, GHashTable* toke
   // printf("\n");
 
   // NOTE: for now I am just doing for atmost 3 and not AST(Abstract Syntax Tree)
+  // TODO: Fix String parsing
   switch (num_tokens) {
     case 1:
       break;
