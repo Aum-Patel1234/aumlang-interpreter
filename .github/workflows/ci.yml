@@ -1,43 +1,34 @@
 name: CI
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+push:
+branches: [ main ]
+pull_request:
+branches: [ main ]
 
 jobs:
-  build:
-    name: Build AumLang
-    runs-on: ubuntu-latest
+build:
+name: Build & Test AumLang (Rust)
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y build-essential cmake libglib2.0-dev
+  - name: Install Rust
+    uses: dtolnay/rust-toolchain@stable
 
-      - name: Configure CMake
-        run: |
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+  - name: Cache cargo
+    uses: Swatinem/rust-cache@v2
 
-      - name: Build
-        run: |
-          cd build
-          make
+  - name: Build
+    run: cargo build --verbose
 
-      - name: Run tests
-        run: |
-          cd build
-          ./aumlang_test
+  - name: Run tests
+    run: cargo test --verbose
 
-      # - name: Run a sample AumLang program
-      #   run: |
-      #     cd build
-      #     echo 'print("Hello AumLang")' > test.aum
-      #     ./aumlang ../test.aum
+  - name: Clippy (Lint)
+    run: cargo clippy -- -D warnings
+
+  - name: Check formatting
+    run: cargo fmt -- --check
