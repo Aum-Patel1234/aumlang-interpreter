@@ -3,22 +3,91 @@ use core::str;
 use crate::token::{Keyword, Operator, Token};
 
 pub fn get_tokens(line: &str) -> Vec<Token> {
-    let words: Vec<&str> = line.split(" ").collect();
-    let n = words.len();
-    let mut tokens: Vec<Token> = Vec::with_capacity(n);
+    let mut tokens: Vec<Token> = Vec::new();
+    let mut i: usize = 0;
+    let chars: Vec<char> = line.chars().collect();
+    let n = chars.len();
 
-    for word in words {
-        match word {
-            "print" => tokens.push(Token::Keyword(Keyword::Print)),
-            "+" => tokens.push(Token::Operator(Operator::Plus)),
-            "-" => tokens.push(Token::Operator(Operator::Minus)),
-            "*" => tokens.push(Token::Operator(Operator::Star)),
-            "/" => tokens.push(Token::Operator(Operator::Slash)),
-            "(" => tokens.push(Token::LParen),
-            ")" => tokens.push(Token::RParen),
-            "{" => tokens.push(Token::LBrace),
-            "}" => tokens.push(Token::RBrace),
-            _ => {}
+    while i < n {
+        let ch = chars[i];
+
+        match ch {
+            ' ' | '\t' => {
+                i += 1;
+            }
+            '+' => {
+                tokens.push(Token::Operator(Operator::Plus));
+                i += 1;
+            }
+            '-' => {
+                tokens.push(Token::Operator(Operator::Minus));
+                i += 1;
+            }
+            '/' => {
+                tokens.push(Token::Operator(Operator::Slash));
+                i += 1;
+            }
+            '*' => {
+                tokens.push(Token::Operator(Operator::Star));
+                i += 1;
+            }
+            '=' => {
+                tokens.push(Token::Operator(Operator::Equal));
+                i += 1;
+            }
+            '(' => {
+                tokens.push(Token::LParen);
+                i += 1;
+            }
+            ')' => {
+                tokens.push(Token::RParen);
+                i += 1;
+            }
+            '{' => {
+                tokens.push(Token::LBrace);
+                i += 1;
+            }
+            '}' => {
+                tokens.push(Token::RBrace);
+                i += 1;
+            }
+
+            '0'..='9' => {
+                let mut dot_seen = false;
+                let mut num = String::new();
+
+                // HACK: here i did dot_seen cause to avoid 24.2.4
+                while i < n && (chars[i].is_ascii_digit() || (!dot_seen && chars[i] == '.')) {
+                    if chars[i] == '.' {
+                        dot_seen = true;
+                    }
+                    num.push(chars[i]);
+                    i += 1;
+                }
+
+                // NOTE: i am only converting to Double nomatter what number
+                // main thing is logic not so much of specifics
+                tokens.push(Token::Double(num.parse().unwrap()));
+            }
+
+            'a'..='z' | 'A'..='Z' | '_' => {
+                let mut variable = String::new();
+
+                while i < n && (chars[i].is_alphabetic() || chars[i] == '_') {
+                    variable.push(chars[i]);
+                    i += 1;
+                }
+
+                match variable.as_str() {
+                    "print" => tokens.push(Token::Keyword(Keyword::Print)),
+                    _ => tokens.push(Token::Identifier(variable)),
+                }
+            }
+
+            _ => {
+                println!("Unknown character: {}", ch);
+                i += 1;
+            }
         }
     }
 
@@ -26,5 +95,5 @@ pub fn get_tokens(line: &str) -> Vec<Token> {
 }
 
 pub fn print_tokens(tokens: &[Token]) {
-    tokens.iter().for_each(|t| println!("{:?}", t));
+    tokens.iter().for_each(|t| println!("{}", t));
 }

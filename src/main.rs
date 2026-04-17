@@ -43,7 +43,7 @@ fn run_cli() {
     }
 }
 
-fn run_file(args: &Vec<String>) {
+fn run_file(args: &[String]) {
     let file_path = &args[1];
 
     match fs::read_to_string(file_path) {
