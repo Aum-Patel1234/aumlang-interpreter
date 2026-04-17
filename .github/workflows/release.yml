@@ -1,69 +1,67 @@
 name: Release AumLang
 
 on:
-push:
-tags:
-- "v*"
+  push:
+    tags:
+      - "v*"
 
 jobs:
-build:
-name: Build (${{ matrix.os }})
-runs-on: ${{ matrix.os }}
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
-strategy:
-  matrix:
-    os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
 
-  - name: Install Rust
-    uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
 
-  - name: Cache cargo
-    uses: Swatinem/rust-cache@v2
+      - name: Install NASM (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y nasm
 
-  # If you use NASM (for .asm files)
-  - name: Install NASM (Linux)
-    if: matrix.os == 'ubuntu-latest'
-    run: sudo apt-get update && sudo apt-get install -y nasm
+      - name: Install NASM (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install nasm
 
-  - name: Install NASM (macOS)
-    if: matrix.os == 'macos-latest'
-    run: brew install nasm
+      - name: Install NASM (Windows)
+        if: matrix.os == 'windows-latest'
+        run: choco install nasm
 
-  - name: Install NASM (Windows)
-    if: matrix.os == 'windows-latest'
-    run: choco install nasm
+      - name: Build (Release)
+        run: cargo build --release
 
-  - name: Build (Release)
-    run: cargo build --release
+      - name: Package (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir -p dist
+          cp target/release/aumlang dist/
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+            tar -czf aumlang-linux.tar.gz -C dist .
+          else
+            tar -czf aumlang-macos.tar.gz -C dist .
+          fi
 
-  - name: Package artifacts (Linux/macOS)
-    if: matrix.os != 'windows-latest'
-    run: |
-      mkdir -p dist
-      cp target/release/aumlang dist/
-      if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-        tar -czf aumlang-linux.tar.gz -C dist .
-      else
-        tar -czf aumlang-macos.tar.gz -C dist .
-      fi
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir dist
+          copy target\release\aumlang.exe dist\
+          powershell Compress-Archive -Path dist\* -DestinationPath aumlang-windows.zip
 
-  - name: Package artifacts (Windows)
-    if: matrix.os == 'windows-latest'
-    run: |
-      mkdir dist
-      copy target\release\aumlang.exe dist\
-      powershell Compress-Archive -Path dist\* -DestinationPath aumlang-windows.zip
-
-  - name: Upload Release
-    uses: softprops/action-gh-release@v1
-    with:
-      files: |
-        aumlang-linux.tar.gz
-        aumlang-macos.tar.gz
-        aumlang-windows.zip
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            aumlang-linux.tar.gz
+            aumlang-macos.tar.gz
+            aumlang-windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
