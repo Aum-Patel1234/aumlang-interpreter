@@ -1,6 +1,6 @@
 use aumlang::{
     parser::get_tokens,
-    token::{Keyword, Operator, Token},
+    token::{Keyword, Operator, Token, Value},
 };
 
 #[test]
@@ -31,12 +31,12 @@ fn test_numbers() {
     assert_eq!(tokens.len(), 2);
 
     match tokens[0] {
-        Token::Double(v) => assert_eq!(v, 10.0),
+        Token::Value(Value::Double(v)) => assert_eq!(v, 10.0),
         _ => panic!("Expected number"),
     }
 
     match tokens[1] {
-        Token::Double(v) => assert_eq!(v, 3.14),
+        Token::Value(Value::Double(v)) => assert_eq!(v, 3.14),
         _ => panic!("Expected float"),
     }
 }
@@ -63,7 +63,7 @@ fn test_expression() {
     assert!(matches!(tokens[1], Token::LParen));
     assert!(matches!(tokens[2], Token::Identifier(_)));
     assert!(matches!(tokens[3], Token::Operator(Operator::Plus)));
-    assert!(matches!(tokens[4], Token::Double(_)));
+    assert!(matches!(tokens[4], Token::Value(_)));
     assert!(matches!(tokens[5], Token::RParen));
 }
 
