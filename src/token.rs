@@ -5,7 +5,13 @@ pub enum Keyword {
     Print,
     // IF,
     // ELSE,
-    // FOR
+    // FOR,
+    // AND,
+    // OR,
+    // TRUE,
+    // FALSE,
+    // RETURN,
+    // NULL,  // see if we want a Option type
 }
 
 #[derive(Debug)]
@@ -15,6 +21,24 @@ pub enum Operator {
     Star,
     Slash,
     Equal,
+    // Xor,
+    // Caret, // for power make an inbuilt function
+    // BitwiseAnd,
+    // BitwiseOr,
+    // Modulo,
+    // Exclamation,
+    // Equality, // ==
+    // NotEqual, // !=
+    // GreaterThanEqualTo // >=
+    // LessThanEqualTo // <=
+}
+
+#[derive(Debug)]
+pub enum Value {
+    // Int(i32),
+    Double(f64),
+    StringLiteral(String),
+    // Char(char),
 }
 
 #[derive(Debug)]
@@ -29,12 +53,7 @@ pub enum Token {
     RBrace, // }
     // LBracket, // [
     // RBracket, // ]
-
-    // Values
-    // Int(i32),
-    Double(f64),
-    StringLiteral(String),
-    Char(char),
+    Value(Value),
 }
 
 impl fmt::Display for Token {
@@ -50,10 +69,18 @@ impl fmt::Display for Token {
             Token::LBrace => write!(f, "{{"),
             Token::RBrace => write!(f, "}}"),
 
+            Token::Value(value) => write!(f, "{}", value),
+        }
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
             // Token::Int(v) => write!(f, "Int({})", v),
-            Token::Double(v) => write!(f, "Double({})", v),
-            Token::StringLiteral(s) => write!(f, "String(\"{}\")", s),
-            Token::Char(c) => write!(f, "Char('{}')", c),
+            Value::Double(v) => write!(f, "Value::Double({})", v),
+            Value::StringLiteral(s) => write!(f, "Value::String(\"{}\")", s),
+            // Value::Char(c) => write!(f, "Char('{}')", c),
         }
     }
 }

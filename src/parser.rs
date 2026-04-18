@@ -1,6 +1,6 @@
 use core::str;
 
-use crate::token::{Keyword, Operator, Token};
+use crate::token::{Keyword, Operator, Token, Value};
 
 pub fn get_tokens(line: &str) -> Vec<Token> {
     let mut tokens: Vec<Token> = Vec::new();
@@ -67,9 +67,10 @@ pub fn get_tokens(line: &str) -> Vec<Token> {
 
                 // NOTE: i am only converting to Double nomatter what number
                 // main thing is logic not so much of specifics
-                tokens.push(Token::Double(num.parse().unwrap()));
+                tokens.push(Token::Value(Value::Double(num.parse().unwrap())));
             }
 
+            // TODO: support string value type with start of  ""
             'a'..='z' | 'A'..='Z' | '_' => {
                 let mut variable = String::new();
 
@@ -95,5 +96,7 @@ pub fn get_tokens(line: &str) -> Vec<Token> {
 }
 
 pub fn print_tokens(tokens: &[Token]) {
-    tokens.iter().for_each(|t| println!("{}", t));
+    print!("[");
+    tokens.iter().for_each(|t| print!("{}, ", t));
+    print!("]\n");
 }

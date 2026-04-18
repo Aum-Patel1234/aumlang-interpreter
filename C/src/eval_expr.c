@@ -161,7 +161,7 @@ Token prat_parser(vector* v, float min_bp) {
       break;
 
     char ch = op->value.ch;
-    // IMPORTANT: as i am freeing the operator memmory is can see that memmory again
+    // IMPORTANT: (use after free)as i am freeing the operator memmory is can see that memmory again
     // Debugging this error for 15 mins
     vector_pop_back_token(v); // consume operator
 
