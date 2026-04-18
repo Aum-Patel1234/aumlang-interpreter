@@ -3,15 +3,13 @@ use core::fmt;
 #[derive(Debug)]
 pub enum Keyword {
     Print,
-    // IF,
-    // ELSE,
-    // FOR,
-    // AND,
-    // OR,
-    // TRUE,
-    // FALSE,
-    // RETURN,
-    // NULL,  // see if we want a Option type
+    IF,
+    ELSE,
+    FOR,
+    WHILE,
+    AND,
+    OR,
+    RETURN,
 }
 
 #[derive(Debug)]
@@ -39,6 +37,7 @@ pub enum Value {
     Double(f64),
     StringLiteral(String),
     // Char(char),
+    NULL, // see if we want a Option type
 }
 
 #[derive(Debug)]
@@ -80,6 +79,7 @@ impl fmt::Display for Value {
             // Token::Int(v) => write!(f, "Int({})", v),
             Value::Double(v) => write!(f, "Value::Double({})", v),
             Value::StringLiteral(s) => write!(f, "Value::String(\"{}\")", s),
+            Value::NULL => write!(f, "NULL"),
             // Value::Char(c) => write!(f, "Char('{}')", c),
         }
     }

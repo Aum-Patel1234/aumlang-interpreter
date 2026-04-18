@@ -81,6 +81,15 @@ pub fn get_tokens(line: &str) -> Vec<Token> {
 
                 match variable.as_str() {
                     "print" => tokens.push(Token::Keyword(Keyword::Print)),
+                    // TODO:
+                    // "if" => tokens.push(Token::Keyword(Keyword::IF)),
+                    // "else" => tokens.push(Token::Keyword(Keyword::ELSE)),
+                    // "while" => tokens.push(Token::Keyword(Keyword::WHILE)),
+                    // "and" => tokens.push(Token::Keyword(Keyword::AND)),
+                    // "for" => tokens.push(Token::Keyword(Keyword::FOR)),
+                    // "or" => tokens.push(Token::Keyword(Keyword::OR)),
+                    // "return" => tokens.push(Token::Keyword(Keyword::RETURN)),
+                    "null" => tokens.push(Token::Value(Value::NULL)),
                     _ => tokens.push(Token::Identifier(variable)),
                 }
             }
@@ -98,5 +107,5 @@ pub fn get_tokens(line: &str) -> Vec<Token> {
 pub fn print_tokens(tokens: &[Token]) {
     print!("[");
     tokens.iter().for_each(|t| print!("{}, ", t));
-    print!("]\n");
+    println!("]");
 }
