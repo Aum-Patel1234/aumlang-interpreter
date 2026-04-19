@@ -19,6 +19,7 @@ pub enum Operator {
     Star,
     Slash,
     Equal,
+    DoubleQuote,
     // Xor,
     // Caret, // for power make an inbuilt function
     // BitwiseAnd,
@@ -82,5 +83,30 @@ impl fmt::Display for Value {
             Value::NULL => write!(f, "NULL"),
             // Value::Char(c) => write!(f, "Char('{}')", c),
         }
+    }
+}
+
+impl fmt::Display for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let op_str = match self {
+            Operator::Plus => "+",
+            Operator::Minus => "-",
+            Operator::Star => "*",
+            Operator::Slash => "/",
+            Operator::Equal => "=",
+            Operator::DoubleQuote => "\"",
+            // Operator::Xor => "^",
+            // Operator::Caret => "**", // or "^" depending on your design
+            // Operator::BitwiseAnd => "&",
+            // Operator::BitwiseOr => "|",
+            // Operator::Modulo => "%",
+            // Operator::Exclamation => "!",
+            // Operator::Equality => "==",
+            // Operator::NotEqual => "!=",
+            // Operator::GreaterThanEqualTo => ">=",
+            // Operator::LessThanEqualTo => "<=",
+        };
+
+        write!(f, "{}", op_str)
     }
 }

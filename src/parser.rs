@@ -35,6 +35,10 @@ pub fn get_tokens(line: &str) -> Vec<Token> {
                 tokens.push(Token::Operator(Operator::Equal));
                 i += 1;
             }
+            '\"' => {
+                tokens.push(Token::Operator(Operator::DoubleQuote));
+                i += 1;
+            }
             '(' => {
                 tokens.push(Token::LParen);
                 i += 1;
