@@ -1,8 +1,10 @@
 use core::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Keyword {
-    Print,
+    LET,
+    PRINT,
+    FUNCTION,
     IF,
     ELSE,
     FOR,
@@ -12,7 +14,7 @@ pub enum Keyword {
     RETURN,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Operator {
     Plus,
     Minus,
@@ -32,7 +34,7 @@ pub enum Operator {
     // LessThanEqualTo // <=
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Value {
     // Int(i32),
     Double(f64),
@@ -41,7 +43,7 @@ pub enum Value {
     NULL, // see if we want a Option type
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Keyword(Keyword),
     Identifier(String),
@@ -53,7 +55,13 @@ pub enum Token {
     RBrace, // }
     // LBracket, // [
     // RBracket, // ]
+    Semicolon,
+    Comma,
+    EOF,
+
     Value(Value),
+
+    Unknown,
 }
 
 impl fmt::Display for Token {
@@ -68,8 +76,13 @@ impl fmt::Display for Token {
             Token::RParen => write!(f, ")"),
             Token::LBrace => write!(f, "{{"),
             Token::RBrace => write!(f, "}}"),
+            Token::Semicolon => write!(f, "SEMICOLON"),
+            Token::Comma => write!(f, "Comma"),
+            Token::EOF => write!(f, "EOF"),
 
             Token::Value(value) => write!(f, "{}", value),
+
+            Token::Unknown => write!(f, "UNKNOWN"),
         }
     }
 }

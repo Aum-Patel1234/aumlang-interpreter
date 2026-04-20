@@ -1,6 +1,6 @@
 use crate::{
     ast::evaluate_expr,
-    parser::{get_tokens, print_tokens},
+    lexer::{get_tokens, print_tokens},
     token::{Operator, Token},
     utils::print_error,
 };
@@ -45,6 +45,10 @@ pub fn process_line(line: &str) {
         Some(Token::RParen) => {}
         Some(Token::LBrace) => {}
         Some(Token::RBrace) => {}
+        Some(Token::Semicolon) => {}
+        Some(Token::Comma) => {}
+        Some(Token::EOF) => {}
+        Some(Token::Unknown) => {}
         None => {}
     }
 
