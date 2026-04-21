@@ -3,7 +3,7 @@ use std::{
     io::{self, Write},
 };
 
-use aumlang::processor::process_line;
+use aumlang::processor::process_input;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -34,7 +34,7 @@ fn run_cli() {
                 }
                 // println!("{}", trimmed_line);
 
-                process_line(trimmed_line);
+                process_input(trimmed_line);
             }
             Err(e) => {
                 eprintln!("Error reading the input: {}", e);
@@ -47,16 +47,7 @@ fn run_file(args: &[String]) {
     let file_path = &args[1];
 
     match fs::read_to_string(file_path) {
-        Ok(content) => {
-            let lines: Vec<&str> = content.lines().collect();
-
-            for line in lines {
-                // println!("line: {}", line);
-                process_line(line.trim());
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to read file: {}", e);
-        }
+        Ok(content) => process_input(&content),
+        Err(e) => eprintln!("Failed to read file: {}", e),
     }
 }

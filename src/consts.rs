@@ -11,6 +11,8 @@ pub const WHILE_KEYWORD: &str = "while";
 pub const AND_KEYWORD: &str = "and";
 pub const OR_KEYWORD: &str = "or";
 pub const RETURN_KEYWORD: &str = "return";
+pub const TRUE_KEYWORD: &str = "true";
+pub const FALSE_KEYWORD: &str = "false";
 
 pub fn look_keyword(identifier: &str) -> Option<Keyword> {
     match identifier {
@@ -24,6 +26,9 @@ pub fn look_keyword(identifier: &str) -> Option<Keyword> {
         AND_KEYWORD => Some(Keyword::AND),
         OR_KEYWORD => Some(Keyword::OR),
         RETURN_KEYWORD => Some(Keyword::RETURN),
+        NULL_KEYWORD => Some(Keyword::NULL),
+        TRUE_KEYWORD => Some(Keyword::TRUE),
+        FALSE_KEYWORD => Some(Keyword::FALSE),
         _ => None,
     }
 }

@@ -12,6 +12,9 @@ pub enum Keyword {
     AND,
     OR,
     RETURN,
+    NULL,
+    TRUE,
+    FALSE,
 }
 
 #[derive(Debug, PartialEq)]
@@ -22,16 +25,17 @@ pub enum Operator {
     Slash,
     Equal,
     DoubleQuote,
-    // Xor,
-    // Caret, // for power make an inbuilt function
-    // BitwiseAnd,
-    // BitwiseOr,
-    // Modulo,
-    // Exclamation,
-    // Equality, // ==
-    // NotEqual, // !=
-    // GreaterThanEqualTo // >=
-    // LessThanEqualTo // <=
+    Xor,
+    BitwiseAnd,
+    BitwiseOr,
+    Modulo,
+    Exclamation,
+    GT,
+    LT,
+    EQ,  // ==
+    NEQ, // !=
+    GTE, // >=
+    LTE, // <=
 }
 
 #[derive(Debug, PartialEq)]
@@ -40,7 +44,7 @@ pub enum Value {
     Double(f64),
     StringLiteral(String),
     // Char(char),
-    NULL, // see if we want a Option type
+    Null, // see if we want a Option type
 }
 
 #[derive(Debug, PartialEq)]
@@ -93,7 +97,7 @@ impl fmt::Display for Value {
             // Token::Int(v) => write!(f, "Int({})", v),
             Value::Double(v) => write!(f, "Value::Double({})", v),
             Value::StringLiteral(s) => write!(f, "Value::String(\"{}\")", s),
-            Value::NULL => write!(f, "NULL"),
+            Value::Null => write!(f, "Value::Null"),
             // Value::Char(c) => write!(f, "Char('{}')", c),
         }
     }
@@ -108,16 +112,18 @@ impl fmt::Display for Operator {
             Operator::Slash => "/",
             Operator::Equal => "=",
             Operator::DoubleQuote => "\"",
-            // Operator::Xor => "^",
+            Operator::Xor => "^",
             // Operator::Caret => "**", // or "^" depending on your design
-            // Operator::BitwiseAnd => "&",
-            // Operator::BitwiseOr => "|",
-            // Operator::Modulo => "%",
-            // Operator::Exclamation => "!",
-            // Operator::Equality => "==",
-            // Operator::NotEqual => "!=",
-            // Operator::GreaterThanEqualTo => ">=",
-            // Operator::LessThanEqualTo => "<=",
+            Operator::BitwiseAnd => "&",
+            Operator::BitwiseOr => "|",
+            Operator::Modulo => "%",
+            Operator::Exclamation => "!",
+            Operator::GT => ">",
+            Operator::LT => "<",
+            Operator::GTE => ">=",
+            Operator::LTE => "<=",
+            Operator::EQ => "==",
+            Operator::NEQ => "!=",
         };
 
         write!(f, "{}", op_str)
