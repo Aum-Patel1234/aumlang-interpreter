@@ -21,14 +21,14 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Build
-        run: cargo build --verbose
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy (Lint)
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run tests
         run: cargo test --verbose
 
-      - name: Clippy (Lint)
-        run: cargo clippy -- -D warnings
-
-      # - name: Check formatting
-      #   run: cargo fmt -- --check
+      - name: Build
+        run: cargo build --verbose

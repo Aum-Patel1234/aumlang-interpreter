@@ -6,7 +6,7 @@ use aumlang::{
 #[test]
 fn test_print_keyword() {
     let input = "print";
-    let tests = vec![Token::Keyword(Keyword::PRINT), Token::EOF];
+    let tests = [Token::Keyword(Keyword::PRINT), Token::EOF];
     let mut lexer = Lexer::new_lexer(input);
     for (i, expected) in tests.iter().enumerate() {
         let tok = lexer.next_token();
@@ -21,7 +21,7 @@ fn test_print_keyword() {
 #[test]
 fn test_operators() {
     let input = "+ - * / =";
-    let tests = vec![
+    let tests = [
         Token::Operator(Operator::Plus),
         Token::Operator(Operator::Minus),
         Token::Operator(Operator::Star),
