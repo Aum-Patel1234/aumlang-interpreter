@@ -1,6 +1,6 @@
 use crate::{
     ast::evaluate_expr,
-    lexer::{get_tokens, print_tokens, Lexer},
+    lexer::{Lexer, get_tokens, print_tokens},
     token::{Operator, Token},
     utils::print_error,
 };

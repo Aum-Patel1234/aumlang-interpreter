@@ -1,7 +1,7 @@
 use core::str;
 
 use crate::{
-    consts::{look_keyword, FUNCTION_KEYWORD, LET_KEYWORD, NULL_KEYWORD, PRINT_KEYWORD},
+    consts::{FUNCTION_KEYWORD, LET_KEYWORD, NULL_KEYWORD, PRINT_KEYWORD, look_keyword},
     token::{Keyword, Operator, Token, Value},
 };
 
