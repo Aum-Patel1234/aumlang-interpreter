@@ -71,7 +71,7 @@ fn test_identifier() {
 #[test]
 fn test_expression() {
     let input = "print(x + 5)";
-    let tests = vec![
+    let tests = [
         Token::Keyword(Keyword::PRINT),
         Token::LParen,
         Token::Identifier("x".to_string()),
@@ -106,7 +106,7 @@ fn test_invalid_char() {
 #[test]
 fn test_next_token() {
     let input = "=+(){};";
-    let tests = vec![
+    let tests = [
         Token::Operator(Operator::Equal),
         Token::Operator(Operator::Plus),
         Token::LParen,
