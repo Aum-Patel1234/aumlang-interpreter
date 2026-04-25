@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::token::{Keyword, Token};
 
 // Traits
@@ -7,19 +5,42 @@ pub trait Node {
     fn token_literal(&self) -> &str;
 }
 
-pub trait Statement: Node {
-    fn statement_node(&self);
+#[derive(Debug)]
+pub enum Statement {
+    Let(LetStatement),
+    // return, expression
+}
+impl Node for Statement {
+    fn token_literal(&self) -> &str {
+        match self {
+            Statement::Let(s) => s.token_literal(),
+        }
+    }
 }
 
-pub trait Expression: Node {
-    fn expression_node(&self);
+#[derive(Debug)]
+pub enum Expression {
+    Identifier(Identifier),
+    // TODO: IntegerLiteral, PrefixExpr, etc.
+}
+impl Node for Expression {
+    fn token_literal(&self) -> &str {
+        match self {
+            Expression::Identifier(expr) => expr.token_literal(),
+        }
+    }
 }
 
+// Program
+#[derive(Debug)]
 pub struct Program {
-    pub statements: Vec<Box<dyn Statement>>,
+    pub statements: Vec<Statement>,
 }
-
-// impls for Program
+impl Program {
+    pub fn new(statements: Vec<Statement>) -> Program {
+        Program { statements }
+    }
+}
 impl Node for Program {
     fn token_literal(&self) -> &str {
         if self.statements.is_empty() {
@@ -30,16 +51,17 @@ impl Node for Program {
     }
 }
 
-// LetStatemet
-pub struct LetStatemet {
-    keyword: Keyword,
-    name: Identifier,
-    value: Box<dyn Expression>,
+// LetStatement
+#[derive(Debug)]
+pub struct LetStatement {
+    pub keyword: Keyword,
+    pub name: Identifier,
+    pub value: Expression,
 }
-// impls for LetStatemet
-impl LetStatemet {
-    pub fn new(keyword: Keyword, name: Identifier, value: Box<dyn Expression>) -> LetStatemet {
-        LetStatemet {
+// impls for LetStatement
+impl LetStatement {
+    pub fn new(keyword: Keyword, name: Identifier, value: Expression) -> LetStatement {
+        LetStatement {
             keyword,
             name,
             value,
@@ -50,23 +72,19 @@ impl LetStatemet {
     pub fn read(&self) {
         println!("{}", self.keyword);
         let b = &self.name;
-        println!("{}", b.value);
-        let a = self.value.deref();
-        a.expression_node();
+        println!("{} {}", b.value, self.value.token_literal());
     }
 }
-impl Node for LetStatemet {
+impl Node for LetStatement {
     fn token_literal(&self) -> &str {
         self.keyword.as_str()
     }
 }
-impl Statement for LetStatemet {
-    fn statement_node(&self) {}
-}
 
 // Identifier
+#[derive(Debug)]
 pub struct Identifier {
-    value: String,
+    pub value: String,
 }
 
 // impls for Identifier
@@ -85,7 +103,4 @@ impl Node for Identifier {
     fn token_literal(&self) -> &str {
         &self.value
     }
-}
-impl Expression for Identifier {
-    fn expression_node(&self) {}
 }
