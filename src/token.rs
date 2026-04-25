@@ -1,6 +1,6 @@
 use core::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Keyword {
     LET,
     PRINT,
@@ -17,7 +17,7 @@ pub enum Keyword {
     FALSE,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Operator {
     Plus,
     Minus,
@@ -38,7 +38,7 @@ pub enum Operator {
     LTE, // <=
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Value {
     // Int(i32),
     Double(f64),
@@ -47,7 +47,7 @@ pub enum Value {
     Null, // see if we want a Option type
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Keyword(Keyword),
     Identifier(String),
@@ -127,5 +127,30 @@ impl fmt::Display for Operator {
         };
 
         write!(f, "{}", op_str)
+    }
+}
+
+impl Keyword {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Keyword::LET => "let",
+            Keyword::PRINT => "print",
+            Keyword::FUNCTION => "fn",
+            Keyword::IF => "if",
+            Keyword::ELSE => "else",
+            Keyword::FOR => "for",
+            Keyword::WHILE => "while",
+            Keyword::AND => "and",
+            Keyword::OR => "or",
+            Keyword::RETURN => "return",
+            Keyword::NULL => "null",
+            Keyword::TRUE => "true",
+            Keyword::FALSE => "false",
+        }
+    }
+}
+impl fmt::Display for Keyword {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
