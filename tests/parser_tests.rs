@@ -4,7 +4,7 @@ use aumlang::{
 };
 
 #[test]
-fn test_print_keyword() {
+fn test_let_parser() {
     let input = r#"
         let x = 5;
         let y = 10;
@@ -15,11 +15,35 @@ fn test_print_keyword() {
     let mut p = Parser::new(l);
 
     let program = p.parse_program();
-    println!("here");
-    println!("{:#?}", program);
+    p.check_parse_errors();
     let tests = ["x", "y", "foobar"];
 
     assert!(program.statements.len() == tests.len());
+    for (i, test) in tests.iter().enumerate() {
+        let stmt = program.statements.get(i);
+        if let Some(s) = stmt
+            && !test_let_statement(s, test)
+        {
+            return;
+        }
+    }
+}
+#[test]
+fn test_parser_error() {
+    let input = r#"
+        let foobar = 838383;
+        let x  5;
+        let y - 10;
+    "#;
+
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+
+    let program = p.parse_program();
+    p.check_parse_errors();
+    let tests = ["x", "y", "foobar"];
+
+    assert!(program.statements.len() == 1);
     for (i, test) in tests.iter().enumerate() {
         let stmt = program.statements.get(i);
         if let Some(s) = stmt
