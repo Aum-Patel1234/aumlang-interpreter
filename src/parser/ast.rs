@@ -8,12 +8,14 @@ pub trait Node {
 #[derive(Debug)]
 pub enum Statement {
     Let(LetStatement),
+    Return(ReturnStatement),
     // return, expression
 }
 impl Node for Statement {
     fn token_literal(&self) -> &str {
         match self {
             Statement::Let(s) => s.token_literal(),
+            Statement::Return(s) => s.token_literal(),
         }
     }
 }
@@ -67,13 +69,6 @@ impl LetStatement {
             value,
         }
     }
-
-    // TODO: remove this fn when implemented statements
-    pub fn read(&self) {
-        println!("{}", self.keyword);
-        let b = &self.name;
-        println!("{} {}", b.value, self.value.token_literal());
-    }
 }
 impl Node for LetStatement {
     fn token_literal(&self) -> &str {
@@ -102,5 +97,25 @@ impl Identifier {
 impl Node for Identifier {
     fn token_literal(&self) -> &str {
         &self.value
+    }
+}
+
+// ReturnStatement
+#[derive(Debug)]
+pub struct ReturnStatement {
+    pub keyword: Keyword,
+    pub return_val: Expression,
+}
+impl ReturnStatement {
+    pub fn new(keyword: Keyword, return_val: Expression) -> ReturnStatement {
+        ReturnStatement {
+            keyword,
+            return_val,
+        }
+    }
+}
+impl Node for ReturnStatement {
+    fn token_literal(&self) -> &str {
+        self.keyword.as_str()
     }
 }

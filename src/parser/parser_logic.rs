@@ -1,6 +1,6 @@
 use crate::{
     lexer::Lexer,
-    parser::ast::{Expression, Identifier, LetStatement, Program, Statement},
+    parser::ast::{Expression, Identifier, LetStatement, Program, ReturnStatement, Statement},
     token::{Keyword, Operator, Token},
     utils::print_error,
 };
@@ -130,8 +130,20 @@ impl<'a> Parser<'a> {
             expression,
         )))
     }
-    fn parse_return_statement(&self) -> Option<Statement> {
-        None
+    fn parse_return_statement(&mut self) -> Option<Statement> {
+        // Eg: return <expression>;
+        self.next_token(); // skip return
+
+        // TODO: parse expredssion
+        let expression = self.parse_expression();
+        while self.curr_token != Token::Semicolon && self.curr_token == Token::EOF {
+            self.next_token();
+        }
+
+        Some(Statement::Return(ReturnStatement::new(
+            Keyword::RETURN,
+            expression,
+        )))
     }
     fn parse_if_statement(&self) -> Option<Statement> {
         None

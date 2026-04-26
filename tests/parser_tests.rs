@@ -59,11 +59,10 @@ fn test_let_statement(s: &Statement, name: &str) -> bool {
         return false;
     }
 
-    // let lstmt = match s {
-    //     Statement::Let(stmt) => stmt,
-    //     // _ => return false,
-    // };
-    let Statement::Let(lstmt) = s;
+    let lstmt = match s {
+        Statement::Let(stmt) => stmt,
+        _ => return false,
+    };
     if lstmt.name.value != name {
         return false;
     }
@@ -73,4 +72,41 @@ fn test_let_statement(s: &Statement, name: &str) -> bool {
     }
 
     true
+}
+
+#[test]
+fn test_return_statements() {
+    let input = r#"
+        return 5;
+        return 10;
+        return 993322;
+    "#;
+
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+
+    assert_eq!(
+        program.statements.len(),
+        3,
+        "program.statements does not contain 3 statements. got={}",
+        program.statements.len()
+    );
+
+    for stmt in program.statements.iter() {
+        match stmt {
+            Statement::Return(return_stmt) => {
+                assert_eq!(
+                    return_stmt.token_literal(),
+                    "return",
+                    "returnStmt.token_literal not 'return'"
+                );
+            }
+            _ => {
+                panic!("stmt not ReturnStatement. got={:?}", stmt);
+            }
+        }
+    }
 }
