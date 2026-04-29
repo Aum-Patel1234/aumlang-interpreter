@@ -2,7 +2,8 @@ use crate::token::{Keyword, Token};
 
 // Traits
 pub trait Node {
-    fn token_literal(&self) -> &str;
+    fn token_literal(&self) -> String;
+    fn string(&self) -> String;
 }
 
 #[derive(Debug)]
@@ -12,10 +13,17 @@ pub enum Statement {
     // return, expression
 }
 impl Node for Statement {
-    fn token_literal(&self) -> &str {
+    fn token_literal(&self) -> String {
         match self {
-            Statement::Let(s) => s.token_literal(),
-            Statement::Return(s) => s.token_literal(),
+            Statement::Let(s) => s.token_literal().to_string(),
+            Statement::Return(s) => s.token_literal().to_string(),
+        }
+    }
+
+    fn string(&self) -> String {
+        match &self {
+            Statement::Let(let_statement) => let_statement.string(),
+            Statement::Return(return_statement) => return_statement.string(),
         }
     }
 }
@@ -26,9 +34,15 @@ pub enum Expression {
     // TODO: IntegerLiteral, PrefixExpr, etc.
 }
 impl Node for Expression {
-    fn token_literal(&self) -> &str {
+    fn token_literal(&self) -> String {
         match self {
-            Expression::Identifier(expr) => expr.token_literal(),
+            Expression::Identifier(expr) => expr.token_literal().to_string(),
+        }
+    }
+
+    fn string(&self) -> String {
+        match &self {
+            Expression::Identifier(identifier) => identifier.string(),
         }
     }
 }
@@ -44,12 +58,22 @@ impl Program {
     }
 }
 impl Node for Program {
-    fn token_literal(&self) -> &str {
+    fn token_literal(&self) -> String {
         if self.statements.is_empty() {
-            return "";
+            return "".to_string();
         }
         // TODO:
         self.statements[0].token_literal()
+    }
+
+    fn string(&self) -> String {
+        let mut string = String::new();
+
+        for stmt in &self.statements {
+            string.push_str(stmt.string().as_str());
+        }
+
+        string
     }
 }
 
@@ -71,8 +95,21 @@ impl LetStatement {
     }
 }
 impl Node for LetStatement {
-    fn token_literal(&self) -> &str {
-        self.keyword.as_str()
+    fn token_literal(&self) -> String {
+        self.keyword.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
+        out.push_str(self.token_literal().as_str());
+        out.push(' ');
+        out.push_str(self.name.string().as_str());
+        out.push_str(" = ");
+
+        out.push_str(self.value.string().as_str());
+        out.push(';');
+
+        out
     }
 }
 
@@ -95,8 +132,12 @@ impl Identifier {
     }
 }
 impl Node for Identifier {
-    fn token_literal(&self) -> &str {
-        &self.value
+    fn token_literal(&self) -> String {
+        self.value.to_string()
+    }
+
+    fn string(&self) -> String {
+        todo!()
     }
 }
 
@@ -115,7 +156,44 @@ impl ReturnStatement {
     }
 }
 impl Node for ReturnStatement {
-    fn token_literal(&self) -> &str {
-        self.keyword.as_str()
+    fn token_literal(&self) -> String {
+        self.keyword.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
+
+        out.push_str(&(self.token_literal() + " "));
+
+        match &self.return_val {
+            Expression::Identifier(identifier) => out.push_str(identifier.string().as_str()),
+        }
+
+        out.push(';');
+        out
+    }
+}
+
+pub struct ExpressionStatement {
+    token: Token,
+    expression: Expression,
+}
+impl ExpressionStatement {
+    pub fn new(token: Token, expression: Expression) -> ExpressionStatement {
+        ExpressionStatement { token, expression }
+    }
+    pub fn read(&self) {
+        println!("{}", self.expression.token_literal());
+    }
+}
+impl Node for ExpressionStatement {
+    fn token_literal(&self) -> String {
+        self.token.to_string()
+    }
+
+    fn string(&self) -> String {
+        match &self.expression {
+            Expression::Identifier(identifier) => identifier.string(),
+        }
     }
 }
