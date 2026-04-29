@@ -70,7 +70,9 @@ impl Node for Program {
         let mut string = String::new();
 
         for stmt in &self.statements {
-            string.push_str(stmt.string().as_str());
+            let mut out = stmt.string();
+            out.push('\n');
+            string.push_str(&out);
         }
 
         string
@@ -137,7 +139,7 @@ impl Node for Identifier {
     }
 
     fn string(&self) -> String {
-        todo!()
+        self.value.clone()
     }
 }
 

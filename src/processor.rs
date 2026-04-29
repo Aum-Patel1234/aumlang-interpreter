@@ -1,4 +1,7 @@
-use crate::{lexer::Lexer, parser::parser_logic::Parser};
+use crate::{
+    lexer::Lexer,
+    parser::{Node, parser_logic::Parser},
+};
 
 pub fn process_input(input: &str) {
     let lexer = Lexer::new_lexer(input);
@@ -17,6 +20,7 @@ pub fn process_input(input: &str) {
     let program = parser.parse_program();
     parser.check_parse_errors();
     println!("{:#?}", program);
+    println!("{}", program.string());
 
     // print_tokens(&tokens);
 }
