@@ -164,14 +164,12 @@ impl Node for ReturnStatement {
 
     fn string(&self) -> String {
         let mut out = String::new();
-
         out.push_str(&(self.token_literal() + " "));
-
         match &self.return_val {
             Expression::Identifier(identifier) => out.push_str(identifier.string().as_str()),
         }
-
         out.push(';');
+
         out
     }
 }

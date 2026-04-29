@@ -1,6 +1,7 @@
 use core::fmt;
+use std::hash::{Hash, Hasher};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum Keyword {
     LET,
     PRINT,
@@ -17,7 +18,7 @@ pub enum Keyword {
     FALSE,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum Operator {
     Plus,
     Minus,
@@ -38,7 +39,7 @@ pub enum Operator {
     LTE, // <=
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum Value {
     // Int(i32),
     Double(f64),
@@ -46,8 +47,28 @@ pub enum Value {
     // Char(char),
     Null, // see if we want a Option type
 }
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Value::Double(l0), Value::Double(r0)) => l0.to_bits() == r0.to_bits(),
+            (Value::StringLiteral(l0), Value::StringLiteral(r0)) => l0 == r0,
+            (Value::Null, Value::Null) => true,
+            _ => false,
+        }
+    }
+}
+impl Eq for Value {}
+impl Hash for Value {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match &self {
+            Value::Double(f) => f.to_bits().hash(state),
+            Value::StringLiteral(s) => s.hash(state),
+            Value::Null => 0.hash(state),
+        }
+    }
+}
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum Token {
     Keyword(Keyword),
     Identifier(String),

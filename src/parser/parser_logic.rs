@@ -1,6 +1,11 @@
+use std::collections::HashMap;
+
 use crate::{
     lexer::Lexer,
-    parser::ast::{Expression, Identifier, LetStatement, Program, ReturnStatement, Statement},
+    parser::{
+        ast::{Expression, Identifier, LetStatement, Program, ReturnStatement, Statement},
+        pratt_parser::{InfixParseFn, PrefixParseFn},
+    },
     token::{Keyword, Operator, Token},
     utils::print_error,
 };
@@ -9,7 +14,11 @@ pub struct Parser<'a> {
     l: Lexer<'a>,
     curr_token: Token,
     peek_token: Token,
+
     errors: Vec<String>,
+
+    prefix_parse_fns: HashMap<Token, PrefixParseFn>,
+    infix_parse_fns: HashMap<Token, InfixParseFn>,
 }
 
 impl<'a> Parser<'a> {
@@ -19,11 +28,19 @@ impl<'a> Parser<'a> {
             curr_token: Token::Unknown,
             peek_token: Token::Unknown,
             errors: Vec::new(),
+            prefix_parse_fns: HashMap::new(),
+            infix_parse_fns: HashMap::new(),
         };
         p.next_token();
         p.next_token();
 
         p
+    }
+    pub fn register_prefix(&mut self, token: Token, prefix_parse_fn: PrefixParseFn) {
+        self.prefix_parse_fns.insert(token, prefix_parse_fn);
+    }
+    pub fn register_infix(&mut self, token: Token, infix_parse_fn: InfixParseFn) {
+        self.infix_parse_fns.insert(token, infix_parse_fn);
     }
 
     pub fn get_errors(&self) -> &Vec<String> {
