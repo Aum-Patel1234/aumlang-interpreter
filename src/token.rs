@@ -88,6 +88,27 @@ pub enum Token {
 
     Unknown,
 }
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub enum TokenKind {
+    Keyword(Keyword),
+    Operator(Operator),
+
+    // NOTE: to remove some hacks while developing the aumlang
+    // Identifiers (no data needed here)
+    // Literals (no data here; actual value stays in Token)
+    Identifier,
+    Value,
+
+    LParen,
+    RParen,
+    LBrace,
+    RBrace,
+    Semicolon,
+    Comma,
+
+    EOF,
+    Unknown,
+}
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
@@ -173,5 +194,24 @@ impl Keyword {
 impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+impl Token {
+    pub fn kind(&self) -> TokenKind {
+        match &self {
+            Token::Keyword(keyword) => TokenKind::Keyword(keyword.clone()),
+            Token::Identifier(_) => TokenKind::Identifier,
+            Token::Operator(operator) => TokenKind::Operator(operator.clone()),
+            Token::LParen => TokenKind::LParen,
+            Token::RParen => TokenKind::RParen,
+            Token::LBrace => TokenKind::LBrace,
+            Token::RBrace => TokenKind::RBrace,
+            Token::Semicolon => TokenKind::Semicolon,
+            Token::Comma => TokenKind::Comma,
+            Token::EOF => TokenKind::EOF,
+            Token::Value(_) => TokenKind::Value,
+            Token::Unknown => TokenKind::Unknown,
+        }
     }
 }

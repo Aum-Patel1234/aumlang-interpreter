@@ -19,8 +19,9 @@ pub fn process_input(input: &str) {
     let mut parser = Parser::new(lexer);
     let program = parser.parse_program();
     parser.check_parse_errors();
-    println!("{:#?}", program);
-    println!("{}", program.string());
+    for stmt in &program.statements {
+        println!("{:?}", stmt.string());
+    }
 
     // print_tokens(&tokens);
 }

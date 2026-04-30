@@ -9,7 +9,7 @@ use crate::{
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
-    token::{Keyword, Operator, Token},
+    token::{Keyword, Operator, Token, TokenKind},
     utils::print_error,
 };
 
@@ -32,8 +32,8 @@ pub struct Parser<'a> {
     errors: Vec<String>,
 
     // NOTE: Storing the memory of the function in map
-    prefix_parse_fns: HashMap<Token, PrefixParseFn<'a>>,
-    infix_parse_fns: HashMap<Token, InfixParseFn>,
+    prefix_parse_fns: HashMap<TokenKind, PrefixParseFn<'a>>,
+    infix_parse_fns: HashMap<TokenKind, InfixParseFn>,
 }
 
 impl<'a> Parser<'a> {
@@ -49,14 +49,14 @@ impl<'a> Parser<'a> {
         p.next_token();
         p.next_token();
 
-        p.register_prefix(Token::Identifier(String::new()), Parser::parse_identifier);
+        p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
 
         p
     }
-    pub fn register_prefix(&mut self, token: Token, prefix_parse_fn: PrefixParseFn<'a>) {
+    pub fn register_prefix(&mut self, token: TokenKind, prefix_parse_fn: PrefixParseFn<'a>) {
         self.prefix_parse_fns.insert(token, prefix_parse_fn);
     }
-    pub fn register_infix(&mut self, token: Token, infix_parse_fn: InfixParseFn) {
+    pub fn register_infix(&mut self, token: TokenKind, infix_parse_fn: InfixParseFn) {
         self.infix_parse_fns.insert(token, infix_parse_fn);
     }
 
@@ -123,7 +123,7 @@ impl<'a> Parser<'a> {
         };
 
         while self.curr_token != Token::EOF {
-            println!("{}", self.curr_token);
+            // println!("{}", self.curr_token);
             let statement: Option<Statement> = match &self.curr_token {
                 Token::Keyword(kw) => match kw {
                     Keyword::LET => self.parse_let_statement(),
@@ -216,13 +216,13 @@ impl<'a> Parser<'a> {
         //     Token::Identifier(_) => Token::Identifier(String::new()),
         //     _ => self.curr_token.clone(),
         // };
-        let key = Token::Identifier(String::new());
+        let key = self.curr_token.kind();
 
         let prefix = self.prefix_parse_fns.get(&key)?;
 
         let expr = prefix(self)?;
         println!("\nExpression : {:?}, prececdence: {:?}", expr, precedence);
-        self.next_token();
+        // self.next_token();
         Some(expr)
     }
 }
