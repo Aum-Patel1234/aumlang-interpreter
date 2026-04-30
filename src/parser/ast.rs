@@ -10,13 +10,14 @@ pub trait Node {
 pub enum Statement {
     Let(LetStatement),
     Return(ReturnStatement),
-    // return, expression
+    Expression(ExpressionStatement),
 }
 impl Node for Statement {
     fn token_literal(&self) -> String {
         match self {
-            Statement::Let(s) => s.token_literal().to_string(),
-            Statement::Return(s) => s.token_literal().to_string(),
+            Statement::Let(s) => s.token_literal(),
+            Statement::Return(s) => s.token_literal(),
+            Statement::Expression(expression_statement) => expression_statement.token_literal(),
         }
     }
 
@@ -24,6 +25,7 @@ impl Node for Statement {
         match &self {
             Statement::Let(let_statement) => let_statement.string(),
             Statement::Return(return_statement) => return_statement.string(),
+            Statement::Expression(expression_statement) => expression_statement.string(),
         }
     }
 }
@@ -174,9 +176,10 @@ impl Node for ReturnStatement {
     }
 }
 
+#[derive(Debug)]
 pub struct ExpressionStatement {
-    token: Token,
-    expression: Expression,
+    pub token: Token,
+    pub expression: Expression,
 }
 impl ExpressionStatement {
     pub fn new(token: Token, expression: Expression) -> ExpressionStatement {

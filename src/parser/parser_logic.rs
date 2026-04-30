@@ -3,12 +3,26 @@ use std::collections::HashMap;
 use crate::{
     lexer::Lexer,
     parser::{
-        ast::{Expression, Identifier, LetStatement, Program, ReturnStatement, Statement},
+        ast::{
+            Expression, ExpressionStatement, Identifier, LetStatement, Program, ReturnStatement,
+            Statement,
+        },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
     token::{Keyword, Operator, Token},
     utils::print_error,
 };
+
+#[derive(PartialEq, PartialOrd, Debug, Clone, Copy)]
+pub enum OperatorPrecedence {
+    Lowest = 0,
+    Equals,
+    LessGreater,
+    Sum,
+    Product,
+    Prefix,
+    Call,
+}
 
 pub struct Parser<'a> {
     l: Lexer<'a>,
@@ -17,7 +31,8 @@ pub struct Parser<'a> {
 
     errors: Vec<String>,
 
-    prefix_parse_fns: HashMap<Token, PrefixParseFn>,
+    // NOTE: Storing the memory of the function in map
+    prefix_parse_fns: HashMap<Token, PrefixParseFn<'a>>,
     infix_parse_fns: HashMap<Token, InfixParseFn>,
 }
 
@@ -34,9 +49,11 @@ impl<'a> Parser<'a> {
         p.next_token();
         p.next_token();
 
+        p.register_prefix(Token::Identifier(String::new()), Parser::parse_identifier);
+
         p
     }
-    pub fn register_prefix(&mut self, token: Token, prefix_parse_fn: PrefixParseFn) {
+    pub fn register_prefix(&mut self, token: Token, prefix_parse_fn: PrefixParseFn<'a>) {
         self.prefix_parse_fns.insert(token, prefix_parse_fn);
     }
     pub fn register_infix(&mut self, token: Token, infix_parse_fn: InfixParseFn) {
@@ -91,6 +108,14 @@ impl<'a> Parser<'a> {
             false
         }
     }
+    fn parse_identifier(&mut self) -> Option<Expression> {
+        match &self.curr_token {
+            Token::Identifier(ident) => Some(Expression::Identifier(Identifier {
+                value: ident.clone(),
+            })),
+            _ => None,
+        }
+    }
 
     pub fn parse_program(&mut self) -> Program {
         let mut program = Program {
@@ -106,7 +131,7 @@ impl<'a> Parser<'a> {
                     Keyword::IF => self.parse_if_statement(),
                     _ => None,
                 },
-                _ => None,
+                _ => self.parse_expression_statement(),
             };
 
             if let Some(stmt) = statement {
@@ -119,56 +144,85 @@ impl<'a> Parser<'a> {
         program
     }
 
+    fn skip_to_semicolon(&mut self) {
+        while self.curr_token != Token::Semicolon && self.curr_token != Token::EOF {
+            self.next_token();
+        }
+    }
+
     fn parse_let_statement(&mut self) -> Option<Statement> {
         // Eg: let <identifier> = <expression>;
         if !self.expect_peek_ident() {
+            self.skip_to_semicolon();
             return None;
         }
 
         let identifier = match Identifier::new(self.curr_token.clone()) {
             Ok(id) => id,
-            Err(_) => return None,
+            Err(_) => {
+                self.skip_to_semicolon();
+                return None;
+            }
         };
 
         if !self.expect_peek(Token::Operator(Operator::Equal)) {
+            self.skip_to_semicolon();
             return None;
         }
-        self.next_token(); // skip equal
+        self.next_token();
 
         // TODO: Skipping for now
-        let expression = self.parse_expression();
-        while self.curr_token != Token::Semicolon && self.curr_token != Token::EOF {
-            self.next_token();
-        }
+        let expression = self.parse_expression(OperatorPrecedence::Lowest);
+        println!("{} {:?}", self.curr_token, expression);
 
-        Some(Statement::Let(LetStatement::new(
-            Keyword::LET,
-            identifier,
-            expression,
-        )))
+        self.skip_to_semicolon();
+
+        expression.map(|expr| Statement::Let(LetStatement::new(Keyword::LET, identifier, expr)))
     }
     fn parse_return_statement(&mut self) -> Option<Statement> {
         // Eg: return <expression>;
         self.next_token(); // skip return
 
         // TODO: parse expredssion
-        let expression = self.parse_expression();
-        while self.curr_token != Token::Semicolon && self.curr_token == Token::EOF {
+        let expression = self.parse_expression(OperatorPrecedence::Lowest);
+        if self.peek_token == Token::Semicolon {
             self.next_token();
         }
 
-        Some(Statement::Return(ReturnStatement::new(
-            Keyword::RETURN,
-            expression,
-        )))
+        expression.map(|expr| Statement::Return(ReturnStatement::new(Keyword::RETURN, expr)))
     }
     fn parse_if_statement(&self) -> Option<Statement> {
         None
     }
+    fn parse_expression_statement(&mut self) -> Option<Statement> {
+        let token = self.curr_token.clone();
+        let expression = self.parse_expression(OperatorPrecedence::Lowest);
+        if self.peek_token == Token::Semicolon {
+            self.next_token();
+        }
 
-    fn parse_expression(&self) -> Expression {
-        Expression::Identifier(Identifier {
-            value: String::from("Not impelmented"),
-        })
+        match expression {
+            Some(expr) => {
+                let stmt = ExpressionStatement::new(token, expr);
+                Some(Statement::Expression(stmt))
+            }
+            None => None,
+        }
+    }
+
+    fn parse_expression(&mut self, precedence: OperatorPrecedence) -> Option<Expression> {
+        // TODO:
+        // let key = match &self.curr_token {
+        //     Token::Identifier(_) => Token::Identifier(String::new()),
+        //     _ => self.curr_token.clone(),
+        // };
+        let key = Token::Identifier(String::new());
+
+        let prefix = self.prefix_parse_fns.get(&key)?;
+
+        let expr = prefix(self)?;
+        println!("\nExpression : {:?}, prececdence: {:?}", expr, precedence);
+        self.next_token();
+        Some(expr)
     }
 }
