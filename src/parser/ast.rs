@@ -36,6 +36,7 @@ pub enum Expression {
     Identifier(Identifier),
     IntegerLiteral(IntegerLiteral),
     PrefixExpression(PrefixExpression),
+    InfixExpression(InfixExpression),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
@@ -43,6 +44,7 @@ impl Node for Expression {
             Expression::Identifier(expr) => expr.token_literal(),
             Expression::IntegerLiteral(integer_literal) => integer_literal.token_literal(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.token_literal(),
+            Expression::InfixExpression(infix_expression) => infix_expression.token_literal(),
         }
     }
 
@@ -51,6 +53,7 @@ impl Node for Expression {
             Expression::Identifier(identifier) => identifier.string(),
             Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
+            Expression::InfixExpression(infix_expression) => infix_expression.string(),
         }
     }
 }
@@ -131,6 +134,37 @@ impl Node for PrefixExpression {
     fn string(&self) -> String {
         let mut out = String::from("(");
         out.push_str(&self.op.to_string());
+        out.push_str(&self.right.string());
+        out.push(')');
+        out
+    }
+}
+
+// Infix Expression
+#[derive(Debug)]
+pub struct InfixExpression {
+    pub left: Box<Expression>,
+    pub op: Operator,
+    pub right: Box<Expression>,
+}
+impl InfixExpression {
+    pub fn new(left: Expression, op: Operator, right: Expression) -> InfixExpression {
+        InfixExpression {
+            left: Box::new(left),
+            op,
+            right: Box::new(right),
+        }
+    }
+}
+impl Node for InfixExpression {
+    fn token_literal(&self) -> String {
+        self.op.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::from("(");
+        out.push_str(&self.left.string());
+        out.push_str(&format!(" {} ", self.op));
         out.push_str(&self.right.string());
         out.push(')');
         out
@@ -233,6 +267,9 @@ impl Node for ReturnStatement {
             Expression::PrefixExpression(prefix_expression) => {
                 out.push_str(&prefix_expression.string())
             }
+            Expression::InfixExpression(infix_expression) => {
+                out.push_str(&infix_expression.string())
+            }
         }
         out.push(';');
 
@@ -263,6 +300,7 @@ impl Node for ExpressionStatement {
             Expression::Identifier(identifier) => identifier.string(),
             Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
+            Expression::InfixExpression(infix_expression) => infix_expression.string(),
         }
     }
 }

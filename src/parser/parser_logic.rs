@@ -4,8 +4,8 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            Expression, ExpressionStatement, Identifier, IntegerLiteral, LetStatement,
-            PrefixExpression, Program, ReturnStatement, Statement,
+            Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral,
+            LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -33,7 +33,7 @@ pub struct Parser<'a> {
 
     // NOTE: Storing the memory of the function in map
     prefix_parse_fns: HashMap<TokenKind, PrefixParseFn<'a>>,
-    infix_parse_fns: HashMap<TokenKind, InfixParseFn>,
+    infix_parse_fns: HashMap<TokenKind, InfixParseFn<'a>>,
 }
 
 impl<'a> Parser<'a> {
@@ -49,6 +49,7 @@ impl<'a> Parser<'a> {
         p.next_token();
         p.next_token();
 
+        // prefix_parse_fns
         p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
         p.register_prefix(TokenKind::Value, Parser::parse_integer_literal);
         p.register_prefix(
@@ -60,12 +61,46 @@ impl<'a> Parser<'a> {
             Parser::parse_prefix_expression,
         );
 
+        // infix_parse_fns
+        p.register_infix(
+            TokenKind::Operator(Operator::Plus),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::Minus),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::GT),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::LT),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::Slash),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::Star),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::EQ),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::NEQ),
+            Parser::parse_infix_expression,
+        );
+
         p
     }
     pub fn register_prefix(&mut self, token: TokenKind, prefix_parse_fn: PrefixParseFn<'a>) {
         self.prefix_parse_fns.insert(token, prefix_parse_fn);
     }
-    pub fn register_infix(&mut self, token: TokenKind, infix_parse_fn: InfixParseFn) {
+    pub fn register_infix(&mut self, token: TokenKind, infix_parse_fn: InfixParseFn<'a>) {
         self.infix_parse_fns.insert(token, infix_parse_fn);
     }
 
@@ -121,6 +156,18 @@ impl<'a> Parser<'a> {
             false
         }
     }
+    pub fn peek_precedence(&self) -> OperatorPrecedence {
+        match &self.peek_token {
+            Token::Operator(op) => op.precedence(),
+            _ => OperatorPrecedence::Lowest,
+        }
+    }
+    pub fn curr_precedence(&self) -> OperatorPrecedence {
+        match &self.curr_token {
+            Token::Operator(op) => op.precedence(),
+            _ => OperatorPrecedence::Lowest,
+        }
+    }
 
     // parse funcs
     fn parse_identifier(&mut self) -> Option<Expression> {
@@ -160,6 +207,23 @@ impl<'a> Parser<'a> {
         let expr = self.parse_expression(OperatorPrecedence::Prefix)?;
         Some(Expression::PrefixExpression(PrefixExpression::new(
             op, expr,
+        )))
+    }
+    fn parse_infix_expression(&mut self, left: Expression) -> Option<Expression> {
+        let op = if let Token::Operator(op) = &self.curr_token {
+            op.clone()
+        } else {
+            self.errors
+                .push(format!("Expected operator, got {}", self.curr_token));
+            return None;
+        };
+
+        let precedence = op.precedence();
+        self.next_token();
+        let right = self.parse_expression(precedence)?;
+
+        Some(Expression::InfixExpression(InfixExpression::new(
+            left, op, right,
         )))
     }
 
@@ -257,25 +321,33 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_expression(&mut self, _precedence: OperatorPrecedence) -> Option<Expression> {
-        // TODO:
-        // let key = match &self.curr_token {
-        //     Token::Identifier(_) => Token::Identifier(String::new()),
-        //     _ => self.curr_token.clone(),
-        // };
+    fn parse_expression(&mut self, precedence: OperatorPrecedence) -> Option<Expression> {
         let key = self.curr_token.kind();
 
         let prefix = match self.prefix_parse_fns.get(&key) {
-            Some(p) => p,
+            Some(p) => *p,
             None => {
                 self.no_prefix_parse_error(key);
                 return None;
             }
         };
 
-        let expr = prefix(self)?;
-        // println!("\nExpression : {:?}, prececdence: {:?}", expr, precedence);
-        // self.next_token();
+        let mut expr = prefix(self)?;
+        // println!("{:?}", expr);
+
+        while self.peek_token != Token::Semicolon && precedence < self.peek_precedence() {
+            let infix = match self.infix_parse_fns.get(&self.peek_token.kind()) {
+                Some(i) => *i,
+                None => {
+                    return Some(expr);
+                }
+            };
+
+            self.next_token();
+
+            expr = infix(self, expr)?;
+        }
+
         Some(expr)
     }
 }

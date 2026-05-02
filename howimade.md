@@ -20,5 +20,8 @@
 
   - Prefix statement-> <prefix operator><expression>;
     <prefix operator> -> only 2 `!, -`
+  - Infix Statement -> <expression> <infix op> <expression>
+  `FUN FACT: because of 2 operands left and right in infix statement they are 
+            called binary expressions and prefix statement as unary expressions`
 
 

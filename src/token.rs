@@ -1,6 +1,8 @@
 use core::fmt;
 use std::hash::{Hash, Hasher};
 
+use crate::parser::parser_logic::OperatorPrecedence;
+
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum Keyword {
     LET,
@@ -212,6 +214,18 @@ impl Token {
             Token::EOF => TokenKind::EOF,
             Token::Value(_) => TokenKind::Value,
             Token::Unknown => TokenKind::Unknown,
+        }
+    }
+}
+
+impl Operator {
+    pub fn precedence(&self) -> OperatorPrecedence {
+        match self {
+            Operator::EQ | Operator::NEQ => OperatorPrecedence::Equals,
+            Operator::LT | Operator::GT => OperatorPrecedence::LessGreater,
+            Operator::Plus | Operator::Minus => OperatorPrecedence::Sum,
+            Operator::Star | Operator::Slash => OperatorPrecedence::Product,
+            _ => OperatorPrecedence::Lowest,
         }
     }
 }

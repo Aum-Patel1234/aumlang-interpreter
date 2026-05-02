@@ -251,3 +251,63 @@ fn test_parsing_prefix_expressions() {
         }
     }
 }
+
+#[test]
+fn test_parsing_infix_expressions() {
+    let tests = [
+        ("5 + 5;", 5.0, "+", 5.0),
+        ("5 - 5;", 5.0, "-", 5.0),
+        ("5 * 5;", 5.0, "*", 5.0),
+        ("5 / 5;", 5.0, "/", 5.0),
+        ("5 > 5;", 5.0, ">", 5.0),
+        ("5 < 5;", 5.0, "<", 5.0),
+        ("5 == 5;", 5.0, "==", 5.0),
+        ("5 != 5;", 5.0, "!=", 5.0),
+    ];
+
+    for (input, left_val, op, right_val) in tests {
+        let l = Lexer::new_lexer(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+
+        assert!(p.check_parse_errors());
+
+        assert_eq!(
+            program.statements.len(),
+            1,
+            "Expected 1 statement, got {}",
+            program.statements.len()
+        );
+
+        let stmt = &program.statements[0];
+
+        // Statement must be ExpressionStatement
+        let Statement::Expression(expr_stmt) = stmt else {
+            panic!("Expected ExpressionStatement");
+        };
+
+        // Expression must be InfixExpression
+        let Expression::InfixExpression(infix) = &expr_stmt.expression else {
+            panic!("Expected InfixExpression");
+        };
+
+        // Left side
+        match infix.left.as_ref() {
+            Expression::IntegerLiteral(il) => {
+                assert_eq!(il.val, left_val);
+            }
+            _ => panic!("Expected left IntegerLiteral"),
+        }
+
+        // Operator
+        assert_eq!(infix.op.to_string(), op);
+
+        // Right side
+        match infix.right.as_ref() {
+            Expression::IntegerLiteral(il) => {
+                assert_eq!(il.val, right_val);
+            }
+            _ => panic!("Expected right IntegerLiteral"),
+        }
+    }
+}
