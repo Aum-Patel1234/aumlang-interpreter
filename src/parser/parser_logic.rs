@@ -4,8 +4,8 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            Expression, ExpressionStatement, Identifier, LetStatement, Program, ReturnStatement,
-            Statement,
+            Expression, ExpressionStatement, Identifier, IntegerLiteral, LetStatement, Program,
+            ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -50,6 +50,7 @@ impl<'a> Parser<'a> {
         p.next_token();
 
         p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
+        p.register_prefix(TokenKind::Value, Parser::parse_integer_literal);
 
         p
     }
@@ -109,11 +110,23 @@ impl<'a> Parser<'a> {
         }
     }
     fn parse_identifier(&mut self) -> Option<Expression> {
-        match &self.curr_token {
-            Token::Identifier(ident) => Some(Expression::Identifier(Identifier {
-                value: ident.clone(),
-            })),
-            _ => None,
+        let identifier = Identifier::new(self.curr_token.clone());
+        match identifier {
+            Ok(ident) => Some(Expression::Identifier(ident)),
+            Err(e) => {
+                self.errors.push(e);
+                None
+            }
+        }
+    }
+    fn parse_integer_literal(&mut self) -> Option<Expression> {
+        let integer_literal = IntegerLiteral::new(self.curr_token.clone());
+        match integer_literal {
+            Ok(il) => Some(Expression::IntegerLiteral(il)),
+            Err(e) => {
+                self.errors.push(e);
+                None
+            }
         }
     }
 
@@ -173,7 +186,6 @@ impl<'a> Parser<'a> {
 
         // TODO: Skipping for now
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
-        println!("{} {:?}", self.curr_token, expression);
 
         self.skip_to_semicolon();
 
@@ -210,7 +222,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_expression(&mut self, precedence: OperatorPrecedence) -> Option<Expression> {
+    fn parse_expression(&mut self, _precedence: OperatorPrecedence) -> Option<Expression> {
         // TODO:
         // let key = match &self.curr_token {
         //     Token::Identifier(_) => Token::Identifier(String::new()),
@@ -221,7 +233,7 @@ impl<'a> Parser<'a> {
         let prefix = self.prefix_parse_fns.get(&key)?;
 
         let expr = prefix(self)?;
-        println!("\nExpression : {:?}, prececdence: {:?}", expr, precedence);
+        // println!("\nExpression : {:?}, prececdence: {:?}", expr, precedence);
         // self.next_token();
         Some(expr)
     }

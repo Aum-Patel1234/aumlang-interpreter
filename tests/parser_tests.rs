@@ -165,33 +165,58 @@ fn test_mixed_statements() {
             (Statement::Expression(expr_stmt), "expr") => {
                 let expr = &expr_stmt.expression;
 
-                // let ident = match expr {
-                //     Expression::Identifier(ident) => ident,
-                // };
-                let Expression::Identifier(ident) = expr;
-                assert_eq!(ident.value, *name);
+                match expr {
+                    Expression::Identifier(ident) => {
+                        assert_eq!(ident.value, *name);
+                    }
+                    _ => panic!("Expected Identifier expression at index {}", i),
+                }
             }
 
             (Statement::Let(let_stmt), "let") => {
-                // check variable name
                 assert_eq!(
                     let_stmt.name.value, *name,
                     "Let name mismatch at index {}",
                     i
                 );
 
-                // check assigned value
-                let Expression::Identifier(ident) = &let_stmt.value;
-
-                assert_eq!(ident.value, *val, "Let value mismatch at index {}", i);
+                match &let_stmt.value {
+                    Expression::Identifier(ident) => {
+                        assert_eq!(ident.value, *val, "Let value mismatch at index {}", i);
+                    }
+                    _ => panic!("Expected Identifier in let value at index {}", i),
+                }
             }
 
-            (Statement::Return(ret_stmt), "return") => {
-                let Expression::Identifier(ident) = &ret_stmt.return_val;
-                assert_eq!(ident.value, *name, "Return value mismatch at index {}", i);
-            }
+            (Statement::Return(ret_stmt), "return") => match &ret_stmt.return_val {
+                Expression::Identifier(ident) => {
+                    assert_eq!(ident.value, *name, "Return value mismatch at index {}", i);
+                }
+                _ => panic!("Expected Identifier in return at index {}", i),
+            },
 
             _ => panic!("Unexpected statement at index {}", i),
         }
+    }
+}
+
+#[test]
+fn test_integer_literal_expression() {
+    let input = "5;";
+
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+
+    assert_eq!(program.statements.len(), 1);
+    let stmt = &program.statements[0];
+
+    match stmt {
+        Statement::Expression(expression_statement) => match &expression_statement.expression {
+            Expression::IntegerLiteral(il) => assert_eq!(il.val, 5.0),
+            _ => panic!("Expeceted IntegerLiteral"),
+        },
+        _ => panic!("Expected ExpressionStatement"),
     }
 }

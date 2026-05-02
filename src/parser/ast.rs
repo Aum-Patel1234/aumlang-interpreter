@@ -1,4 +1,4 @@
-use crate::token::{Keyword, Token};
+use crate::token::{Keyword, Token, Value};
 
 // Traits
 pub trait Node {
@@ -30,22 +30,79 @@ impl Node for Statement {
     }
 }
 
+// NOTE: i have ignored expressionNode() in the book
 #[derive(Debug)]
 pub enum Expression {
     Identifier(Identifier),
-    // TODO: IntegerLiteral, PrefixExpr, etc.
+    IntegerLiteral(IntegerLiteral),
+    // TODO: PrefixExpr, etc.
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
         match self {
-            Expression::Identifier(expr) => expr.token_literal().to_string(),
+            Expression::Identifier(expr) => expr.token_literal(),
+            Expression::IntegerLiteral(integer_literal) => integer_literal.token_literal(),
         }
     }
 
     fn string(&self) -> String {
         match &self {
             Expression::Identifier(identifier) => identifier.string(),
+            Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
         }
+    }
+}
+
+// Identifier
+#[derive(Debug)]
+pub struct Identifier {
+    pub value: String,
+}
+
+// impls for Identifier
+impl Identifier {
+    pub fn new(token: Token) -> Result<Identifier, String> {
+        match token {
+            Token::Identifier(val) => Ok(Identifier { value: val }),
+            _ => Err(format!(
+                "Error while Identifier::new() --> Expected Token::Identifier, got {:?}",
+                token
+            )),
+        }
+    }
+}
+impl Node for Identifier {
+    fn token_literal(&self) -> String {
+        self.value.to_string()
+    }
+
+    fn string(&self) -> String {
+        self.value.clone()
+    }
+}
+
+// IntegerLiteral
+#[derive(Debug)]
+pub struct IntegerLiteral {
+    pub token: Token,
+    pub val: f64,
+}
+impl IntegerLiteral {
+    pub fn new(token: Token) -> Result<IntegerLiteral, String> {
+        if let Token::Value(Value::Double(v)) = token {
+            Ok(IntegerLiteral { token, val: v })
+        } else {
+            Err(format!("Expected numeric literal, got {:?}", token))
+        }
+    }
+}
+impl Node for IntegerLiteral {
+    fn token_literal(&self) -> String {
+        self.token.to_string()
+    }
+
+    fn string(&self) -> String {
+        self.token.to_string()
     }
 }
 
@@ -117,34 +174,6 @@ impl Node for LetStatement {
     }
 }
 
-// Identifier
-#[derive(Debug)]
-pub struct Identifier {
-    pub value: String,
-}
-
-// impls for Identifier
-impl Identifier {
-    pub fn new(token: Token) -> Result<Identifier, String> {
-        match token {
-            Token::Identifier(val) => Ok(Identifier { value: val }),
-            _ => Err(format!(
-                "Error while Identifier::new() --> Expected Token::Identifier, got {:?}",
-                token
-            )),
-        }
-    }
-}
-impl Node for Identifier {
-    fn token_literal(&self) -> String {
-        self.value.to_string()
-    }
-
-    fn string(&self) -> String {
-        self.value.clone()
-    }
-}
-
 // ReturnStatement
 #[derive(Debug)]
 pub struct ReturnStatement {
@@ -169,6 +198,9 @@ impl Node for ReturnStatement {
         out.push_str(&(self.token_literal() + " "));
         match &self.return_val {
             Expression::Identifier(identifier) => out.push_str(identifier.string().as_str()),
+            Expression::IntegerLiteral(integer_literal) => {
+                out.push_str(integer_literal.string().as_str())
+            }
         }
         out.push(';');
 
@@ -197,6 +229,7 @@ impl Node for ExpressionStatement {
     fn string(&self) -> String {
         match &self.expression {
             Expression::Identifier(identifier) => identifier.string(),
+            Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
         }
     }
 }
