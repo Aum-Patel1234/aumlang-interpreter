@@ -10,4 +10,15 @@
 ### Parsing
 
 1. Think of every line as a Statement.
-  Eg: let <identifier> = <expression>;
+  - Eg: let <identifier> = <expression>;
+2. Make Expression, Statement and Node(interface)
+  - Each program is a Vec<Statement>
+
+  - Statement
+    LetStatement -> `let <identifier> = <expression>;`
+    ReturnStatement -> `return <expression>;`
+
+  - Prefix statement-> <prefix operator><expression>;
+    <prefix operator> -> only 2 `!, -`
+
+

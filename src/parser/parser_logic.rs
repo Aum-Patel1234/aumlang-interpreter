@@ -4,8 +4,8 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            Expression, ExpressionStatement, Identifier, IntegerLiteral, LetStatement, Program,
-            ReturnStatement, Statement,
+            Expression, ExpressionStatement, Identifier, IntegerLiteral, LetStatement,
+            PrefixExpression, Program, ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -51,6 +51,14 @@ impl<'a> Parser<'a> {
 
         p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
         p.register_prefix(TokenKind::Value, Parser::parse_integer_literal);
+        p.register_prefix(
+            TokenKind::Operator(Operator::Exclamation),
+            Parser::parse_prefix_expression,
+        );
+        p.register_prefix(
+            TokenKind::Operator(Operator::Minus),
+            Parser::parse_prefix_expression,
+        );
 
         p
     }
@@ -84,6 +92,10 @@ impl<'a> Parser<'a> {
         }
         false
     }
+    pub fn no_prefix_parse_error(&mut self, kind: TokenKind) {
+        self.errors
+            .push(format!("No prefix parse fn found for token - {:?}.", kind));
+    }
 
     pub fn next_token(&mut self) {
         self.curr_token = self.peek_token.clone();
@@ -109,6 +121,8 @@ impl<'a> Parser<'a> {
             false
         }
     }
+
+    // parse funcs
     fn parse_identifier(&mut self) -> Option<Expression> {
         let identifier = Identifier::new(self.curr_token.clone());
         match identifier {
@@ -129,7 +143,27 @@ impl<'a> Parser<'a> {
             }
         }
     }
+    fn parse_prefix_expression(&mut self) -> Option<Expression> {
+        let op = match &self.curr_token {
+            Token::Operator(op) => op.clone(),
+            tok => {
+                self.errors.push(format!(
+                    "Expected Operator for prefix_expression, but found {}",
+                    tok
+                ));
+                return None;
+            }
+        };
 
+        self.next_token(); // move to right expression
+
+        let expr = self.parse_expression(OperatorPrecedence::Prefix)?;
+        Some(Expression::PrefixExpression(PrefixExpression::new(
+            op, expr,
+        )))
+    }
+
+    // parse program
     pub fn parse_program(&mut self) -> Program {
         let mut program = Program {
             statements: Vec::new(),
@@ -204,6 +238,7 @@ impl<'a> Parser<'a> {
         expression.map(|expr| Statement::Return(ReturnStatement::new(Keyword::RETURN, expr)))
     }
     fn parse_if_statement(&self) -> Option<Statement> {
+        // TODO:
         None
     }
     fn parse_expression_statement(&mut self) -> Option<Statement> {
@@ -230,7 +265,13 @@ impl<'a> Parser<'a> {
         // };
         let key = self.curr_token.kind();
 
-        let prefix = self.prefix_parse_fns.get(&key)?;
+        let prefix = match self.prefix_parse_fns.get(&key) {
+            Some(p) => p,
+            None => {
+                self.no_prefix_parse_error(key);
+                return None;
+            }
+        };
 
         let expr = prefix(self)?;
         // println!("\nExpression : {:?}, prececdence: {:?}", expr, precedence);

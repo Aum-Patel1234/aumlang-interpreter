@@ -220,3 +220,34 @@ fn test_integer_literal_expression() {
         _ => panic!("Expected ExpressionStatement"),
     }
 }
+
+#[test]
+fn test_parsing_prefix_expressions() {
+    let tests = [("!5", "!", 5.0), ("-15", "-", 15.0)];
+
+    for (input, prefix, ans) in tests {
+        let l = Lexer::new_lexer(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+        assert!(p.check_parse_errors());
+
+        assert_eq!(program.statements.len(), 1);
+        let stmt = &program.statements[0];
+        println!("\n\n{:?}\n\n", stmt);
+
+        match stmt {
+            Statement::Expression(expression_statement) => match &expression_statement.expression {
+                Expression::PrefixExpression(pe) => {
+                    assert_eq!(&pe.op.to_string(), prefix);
+
+                    match pe.right.as_ref() {
+                        Expression::IntegerLiteral(il) => assert_eq!(il.val, ans),
+                        _ => panic!("Expected IntegerLiteral as right expression."),
+                    }
+                }
+                _ => panic!("Expeceted IntegerLiteral"),
+            },
+            _ => panic!("Expected ExpressionStatement"),
+        }
+    }
+}

@@ -1,4 +1,4 @@
-use crate::token::{Keyword, Token, Value};
+use crate::token::{Keyword, Operator, Token, Value};
 
 // Traits
 pub trait Node {
@@ -35,13 +35,14 @@ impl Node for Statement {
 pub enum Expression {
     Identifier(Identifier),
     IntegerLiteral(IntegerLiteral),
-    // TODO: PrefixExpr, etc.
+    PrefixExpression(PrefixExpression),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
         match self {
             Expression::Identifier(expr) => expr.token_literal(),
             Expression::IntegerLiteral(integer_literal) => integer_literal.token_literal(),
+            Expression::PrefixExpression(prefix_expression) => prefix_expression.token_literal(),
         }
     }
 
@@ -49,6 +50,7 @@ impl Node for Expression {
         match &self {
             Expression::Identifier(identifier) => identifier.string(),
             Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
+            Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
         }
     }
 }
@@ -103,6 +105,35 @@ impl Node for IntegerLiteral {
 
     fn string(&self) -> String {
         self.token.to_string()
+    }
+}
+
+// PrefixExpression
+#[derive(Debug)]
+pub struct PrefixExpression {
+    // pub token: Token,
+    pub op: Operator,
+    pub right: Box<Expression>, // to break cycle for compiler
+}
+impl PrefixExpression {
+    pub fn new(op: Operator, right: Expression) -> Self {
+        PrefixExpression {
+            op,
+            right: Box::new(right),
+        }
+    }
+}
+impl Node for PrefixExpression {
+    fn token_literal(&self) -> String {
+        self.op.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::from("(");
+        out.push_str(&self.op.to_string());
+        out.push_str(&self.right.string());
+        out.push(')');
+        out
     }
 }
 
@@ -198,8 +229,9 @@ impl Node for ReturnStatement {
         out.push_str(&(self.token_literal() + " "));
         match &self.return_val {
             Expression::Identifier(identifier) => out.push_str(identifier.string().as_str()),
-            Expression::IntegerLiteral(integer_literal) => {
-                out.push_str(integer_literal.string().as_str())
+            Expression::IntegerLiteral(integer_literal) => out.push_str(&integer_literal.string()),
+            Expression::PrefixExpression(prefix_expression) => {
+                out.push_str(&prefix_expression.string())
             }
         }
         out.push(';');
@@ -230,6 +262,7 @@ impl Node for ExpressionStatement {
         match &self.expression {
             Expression::Identifier(identifier) => identifier.string(),
             Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
+            Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
         }
     }
 }
