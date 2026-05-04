@@ -1,10 +1,14 @@
+use core::panic;
+
 use aumlang::{
     lexer::Lexer,
     parser::{
         // Node,
+        Node,
         ast::{Expression, Statement},
         parser_logic::Parser,
     },
+    token::Value,
 };
 
 // #[test]
@@ -310,4 +314,125 @@ fn test_parsing_infix_expressions() {
             _ => panic!("Expected right IntegerLiteral"),
         }
     }
+}
+
+#[test]
+fn test_operator_precedence_parsing() {
+    let tests = [
+        ("-a * b", "((-a) * b)"),
+        ("!-a", "(!(-a))"),
+        ("a + b + c", "((a + b) + c)"),
+        ("a + b - c", "((a + b) - c)"),
+        ("a * b * c", "((a * b) * c)"),
+        ("a * b / c", "((a * b) / c)"),
+        ("a + b / c", "(a + (b / c))"),
+        ("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+        (
+            "3 + 4; -5 * 5",
+            "(Value::Double(3) + Value::Double(4));\n((-Value::Double(5)) * Value::Double(5))",
+        ),
+        (
+            "5 > 4 == 3 < 4",
+            "((Value::Double(5) > Value::Double(4)) == (Value::Double(3) < Value::Double(4)))",
+        ),
+        (
+            "5 < 4 != 3 > 4",
+            "((Value::Double(5) < Value::Double(4)) != (Value::Double(3) > Value::Double(4)))",
+        ),
+        (
+            "3 + 4 * 5 == 3 * 1 + 4 * 5",
+            "((Value::Double(3) + (Value::Double(4) * Value::Double(5))) == ((Value::Double(3) * Value::Double(1)) + (Value::Double(4) * Value::Double(5))))",
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let l = Lexer::new_lexer(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+        assert!(p.check_parse_errors());
+
+        assert_eq!(program.to_string(), expected);
+    }
+}
+
+fn test_identifier(exp: &Expression, value: &str) {
+    let ident = match exp {
+        Expression::Identifier(identifier) => identifier,
+        expr => panic!("Expected IdentifierExpression, found {:?}", expr),
+    };
+
+    assert_eq!(ident.value, value, "identifier value mismatch");
+    assert_eq!(ident.token_literal(), value, "token literal mismatch");
+}
+fn test_literal_expression(exp: &Expression, expected: Value) {
+    match (exp, expected) {
+        (Expression::IntegerLiteral(lit), Value::Double(v)) => {
+            assert_eq!(lit.val, v, "literal value mismatch");
+        }
+        (Expression::Identifier(ident), Value::StringLiteral(s)) => {
+            assert_eq!(ident.value, s, "identifier mismatch");
+        }
+        (expr, val) => {
+            panic!("type mismatch: got {:?} expected {:?}", expr, val);
+        }
+    }
+}
+
+fn test_infix_expression(exp: &Expression, left: Value, operator: &str, right: Value) {
+    let op_exp = match exp {
+        Expression::InfixExpression(infix) => infix,
+        _ => panic!("exp is not InfixExpression"),
+    };
+
+    test_literal_expression(&op_exp.left, left);
+    assert_eq!(op_exp.op.to_string(), operator, "operator mismatch");
+    test_literal_expression(&op_exp.right, right);
+}
+#[test]
+fn test_parsing_infix_expressions_2() {
+    let tests = [
+        ("5 + 5;", Value::Double(5.0), "+", Value::Double(5.0)),
+        ("5 - 5;", Value::Double(5.0), "-", Value::Double(5.0)),
+        ("5 * 5;", Value::Double(5.0), "*", Value::Double(5.0)),
+        ("5 / 5;", Value::Double(5.0), "/", Value::Double(5.0)),
+        ("5 > 5;", Value::Double(5.0), ">", Value::Double(5.0)),
+        ("5 < 5;", Value::Double(5.0), "<", Value::Double(5.0)),
+        ("5 == 5;", Value::Double(5.0), "==", Value::Double(5.0)),
+        ("5 != 5;", Value::Double(5.0), "!=", Value::Double(5.0)),
+    ];
+
+    for (input, left, operator, right) in tests {
+        let lexer = Lexer::new_lexer(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+        assert!(parser.check_parse_errors());
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = &program.statements[0];
+        let expr = match stmt {
+            Statement::Expression(es) => &es.expression,
+            _ => panic!("stmt is not ExpressionStatement"),
+        };
+
+        test_infix_expression(expr, left, operator, right);
+    }
+}
+#[test]
+fn test_identifier_expression() {
+    let input = "foobar;";
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = &program.statements[0];
+
+    let expr = match stmt {
+        Statement::Expression(expr) => &expr.expression,
+        _ => panic!("stmt is not Expression"),
+    };
+
+    test_identifier(expr, "foobar");
 }

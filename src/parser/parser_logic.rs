@@ -221,6 +221,15 @@ impl<'a> Parser<'a> {
         let precedence = op.precedence();
         self.next_token();
         let right = self.parse_expression(precedence)?;
+        // NOTE:  for left associative currenty the above is right associative
+        // right associative : "(a + (b + c))"
+        // left associative  : "((a + b) + c)"
+        // if matches!(op, Operator::Plus) {
+        //     right = self.parse_expression(precedence-1)?;
+        // }
+        //
+        // NOTE: or another way is to make an (left_precedence, right_precedence)
+        // Can be usefull for -- or ++ operators
 
         Some(Expression::InfixExpression(InfixExpression::new(
             left, op, right,

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::token::{Keyword, Operator, Token, Value};
 
 // Traits
@@ -200,6 +202,18 @@ impl Node for Program {
         }
 
         string
+    }
+}
+impl Display for Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let output = self
+            .statements
+            .iter()
+            .map(|s| s.string())
+            .collect::<Vec<_>>()
+            .join(";\n");
+
+        write!(f, "{}", output)
     }
 }
 
