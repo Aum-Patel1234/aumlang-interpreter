@@ -372,6 +372,12 @@ fn test_literal_expression(exp: &Expression, expected: Value) {
         (Expression::Identifier(ident), Value::StringLiteral(s)) => {
             assert_eq!(ident.value, s, "identifier mismatch");
         }
+        (Expression::Boolean(b), Value::True) => {
+            assert_eq!(b.value, Value::True);
+        }
+        (Expression::Boolean(b), Value::False) => {
+            assert_eq!(b.value, Value::False);
+        }
         (expr, val) => {
             panic!("type mismatch: got {:?} expected {:?}", expr, val);
         }
@@ -435,4 +441,95 @@ fn test_identifier_expression() {
     };
 
     test_identifier(expr, "foobar");
+}
+fn test_boolean_literal(exp: &Expression, value: Value) {
+    let bo = match exp {
+        Expression::Boolean(b) => b,
+        _ => panic!("exp is not Boolean. got {:?}", exp),
+    };
+
+    assert_eq!(bo.value, value, "boolean value mismatch");
+
+    assert_eq!(
+        bo.token_literal(),
+        value.to_string(),
+        "token literal mismatch"
+    );
+}
+#[test]
+fn test_boolean_expression() {
+    let tests = [("true;", Value::True), ("false;", Value::False)];
+
+    for (input, expected) in tests {
+        let lexer = Lexer::new_lexer(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+
+        assert!(parser.check_parse_errors());
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = &program.statements[0];
+
+        let expr = match stmt {
+            Statement::Expression(es) => &es.expression,
+            _ => panic!("stmt is not Expression"),
+        };
+
+        test_boolean_literal(expr, expected);
+    }
+}
+#[test]
+fn test_parsing_infix_expressions_with_booleans() {
+    let tests = [
+        ("true == true", Value::True, "==", Value::True),
+        ("true != false", Value::True, "!=", Value::False),
+        ("false == false", Value::False, "==", Value::False),
+    ];
+
+    for (input, left, operator, right) in tests {
+        let lexer = Lexer::new_lexer(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+
+        assert!(parser.check_parse_errors());
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = &program.statements[0];
+
+        let expr = match stmt {
+            Statement::Expression(es) => &es.expression,
+            _ => panic!("stmt is not Expression"),
+        };
+
+        test_infix_expression(expr, left, operator, right);
+    }
+}
+#[test]
+fn test_parsing_prefix_expressions_with_booleans() {
+    let tests = [("!true;", "!", Value::True), ("!false;", "!", Value::False)];
+
+    for (input, operator, value) in tests {
+        let lexer = Lexer::new_lexer(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse_program();
+
+        assert!(parser.check_parse_errors());
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = &program.statements[0];
+
+        let expr = match stmt {
+            Statement::Expression(es) => &es.expression,
+            _ => panic!("stmt is not Expression"),
+        };
+
+        let prefix = match expr {
+            Expression::PrefixExpression(p) => p,
+            _ => panic!("expr is not PrefixExpression"),
+        };
+
+        assert_eq!(prefix.op.to_string(), operator);
+
+        test_literal_expression(&prefix.right, value);
+    }
 }

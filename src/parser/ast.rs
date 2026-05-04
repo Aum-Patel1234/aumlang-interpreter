@@ -39,6 +39,7 @@ pub enum Expression {
     IntegerLiteral(IntegerLiteral),
     PrefixExpression(PrefixExpression),
     InfixExpression(InfixExpression),
+    Boolean(Boolean),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
@@ -47,6 +48,7 @@ impl Node for Expression {
             Expression::IntegerLiteral(integer_literal) => integer_literal.token_literal(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.token_literal(),
             Expression::InfixExpression(infix_expression) => infix_expression.token_literal(),
+            Expression::Boolean(boolean) => boolean.token_literal(),
         }
     }
 
@@ -56,6 +58,7 @@ impl Node for Expression {
             Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
+            Expression::Boolean(boolean) => boolean.string(),
         }
     }
 }
@@ -110,6 +113,35 @@ impl Node for IntegerLiteral {
 
     fn string(&self) -> String {
         self.token.to_string()
+    }
+}
+
+// Boolean
+#[derive(Debug)]
+pub struct Boolean {
+    pub value: Value,
+}
+impl Boolean {
+    pub fn new(token: Token) -> Result<Boolean, String> {
+        match token {
+            Token::Keyword(kw) => match kw {
+                Keyword::TRUE => Ok(Boolean { value: Value::True }),
+                Keyword::FALSE => Ok(Boolean {
+                    value: Value::False,
+                }),
+                k => Err(format!("Expected Keyword::True/False, found {}", k)),
+            },
+            e => Err(format!("Expected boolean token, found {}", e)),
+        }
+    }
+}
+impl Node for Boolean {
+    fn token_literal(&self) -> String {
+        self.value.to_string()
+    }
+
+    fn string(&self) -> String {
+        self.value.to_string()
     }
 }
 
@@ -284,6 +316,7 @@ impl Node for ReturnStatement {
             Expression::InfixExpression(infix_expression) => {
                 out.push_str(&infix_expression.string())
             }
+            Expression::Boolean(boolean) => out.push_str(&boolean.string()),
         }
         out.push(';');
 
@@ -315,6 +348,7 @@ impl Node for ExpressionStatement {
             Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
+            Expression::Boolean(boolean) => boolean.string(),
         }
     }
 }

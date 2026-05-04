@@ -46,6 +46,8 @@ pub enum Value {
     // Int(i32),
     Double(f64),
     StringLiteral(String),
+    True,
+    False,
     // Char(char),
     Null, // see if we want a Option type
 }
@@ -55,6 +57,8 @@ impl PartialEq for Value {
             (Value::Double(l0), Value::Double(r0)) => l0.to_bits() == r0.to_bits(),
             (Value::StringLiteral(l0), Value::StringLiteral(r0)) => l0 == r0,
             (Value::Null, Value::Null) => true,
+            (Value::True, Value::True) => true,
+            (Value::False, Value::False) => true,
             _ => false,
         }
     }
@@ -65,7 +69,9 @@ impl Hash for Value {
         match &self {
             Value::Double(f) => f.to_bits().hash(state),
             Value::StringLiteral(s) => s.hash(state),
-            Value::Null => 0.hash(state),
+            Value::Null => 0u8.hash(state),
+            Value::True => 1u8.hash(state),
+            Value::False => 2u8.hash(state),
         }
     }
 }
@@ -143,6 +149,8 @@ impl fmt::Display for Value {
             Value::StringLiteral(s) => write!(f, "Value::String(\"{}\")", s),
             Value::Null => write!(f, "Value::Null"),
             // Value::Char(c) => write!(f, "Char('{}')", c),
+            Value::True => write!(f, "Value::True"),
+            Value::False => write!(f, "Value::False"),
         }
     }
 }

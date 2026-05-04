@@ -4,7 +4,7 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral,
+            Boolean, Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral,
             LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
@@ -60,6 +60,8 @@ impl<'a> Parser<'a> {
             TokenKind::Operator(Operator::Minus),
             Parser::parse_prefix_expression,
         );
+        p.register_prefix(TokenKind::Keyword(Keyword::TRUE), Parser::parse_boolean);
+        p.register_prefix(TokenKind::Keyword(Keyword::FALSE), Parser::parse_boolean);
 
         // infix_parse_fns
         p.register_infix(
@@ -190,6 +192,15 @@ impl<'a> Parser<'a> {
             }
         }
     }
+    fn parse_boolean(&mut self) -> Option<Expression> {
+        match Boolean::new(self.curr_token.clone()) {
+            Ok(b) => Some(Expression::Boolean(b)),
+            Err(e) => {
+                self.errors.push(e);
+                None
+            }
+        }
+    }
     fn parse_prefix_expression(&mut self) -> Option<Expression> {
         let op = match &self.curr_token {
             Token::Operator(op) => op.clone(),
@@ -249,7 +260,7 @@ impl<'a> Parser<'a> {
                     Keyword::LET => self.parse_let_statement(),
                     Keyword::RETURN => self.parse_return_statement(),
                     Keyword::IF => self.parse_if_statement(),
-                    _ => None,
+                    _ => self.parse_expression_statement(),
                 },
                 _ => self.parse_expression_statement(),
             };
