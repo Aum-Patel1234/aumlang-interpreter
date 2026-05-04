@@ -343,6 +343,20 @@ fn test_operator_precedence_parsing() {
             "3 + 4 * 5 == 3 * 1 + 4 * 5",
             "((Value::Double(3) + (Value::Double(4) * Value::Double(5))) == ((Value::Double(3) * Value::Double(1)) + (Value::Double(4) * Value::Double(5))))",
         ),
+        (
+            "1 + (2 + 3) + 4",
+            "((Value::Double(1) + (Value::Double(2) + Value::Double(3))) + Value::Double(4))",
+        ),
+        (
+            "(5 + 5) * 2",
+            "((Value::Double(5) + Value::Double(5)) * Value::Double(2))",
+        ),
+        (
+            "2 / (5 + 5)",
+            "(Value::Double(2) / (Value::Double(5) + Value::Double(5)))",
+        ),
+        ("-(5 + 5)", "(-(Value::Double(5) + Value::Double(5)))"),
+        ("!(true == true)", "(!(Value::True == Value::True))"),
     ];
 
     for (input, expected) in tests {

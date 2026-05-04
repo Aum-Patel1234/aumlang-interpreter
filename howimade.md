@@ -26,3 +26,5 @@
 
   - Main Parser Logic -> Pratt Parser
 
+  - for grouped expressions giving RBrace lowest precedence would give subtle bugs.
+

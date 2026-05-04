@@ -220,7 +220,6 @@ impl Node for Program {
         if self.statements.is_empty() {
             return "".to_string();
         }
-        // TODO:
         self.statements[0].token_literal()
     }
 
@@ -332,9 +331,6 @@ pub struct ExpressionStatement {
 impl ExpressionStatement {
     pub fn new(token: Token, expression: Expression) -> ExpressionStatement {
         ExpressionStatement { token, expression }
-    }
-    pub fn read(&self) {
-        println!("{}", self.expression.token_literal());
     }
 }
 impl Node for ExpressionStatement {

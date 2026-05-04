@@ -62,6 +62,7 @@ impl<'a> Parser<'a> {
         );
         p.register_prefix(TokenKind::Keyword(Keyword::TRUE), Parser::parse_boolean);
         p.register_prefix(TokenKind::Keyword(Keyword::FALSE), Parser::parse_boolean);
+        p.register_prefix(TokenKind::LParen, Parser::parse_grouped_expression);
 
         // infix_parse_fns
         p.register_infix(
@@ -201,6 +202,15 @@ impl<'a> Parser<'a> {
             }
         }
     }
+    fn parse_grouped_expression(&mut self) -> Option<Expression> {
+        self.next_token(); // skip (
+
+        let expr = self.parse_expression(OperatorPrecedence::Lowest);
+        if !self.expect_peek(Token::RParen) {
+            return None;
+        }
+        expr
+    }
     fn parse_prefix_expression(&mut self) -> Option<Expression> {
         let op = match &self.curr_token {
             Token::Operator(op) => op.clone(),
@@ -302,9 +312,7 @@ impl<'a> Parser<'a> {
         }
         self.next_token();
 
-        // TODO: Skipping for now
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
-
         self.skip_to_semicolon();
 
         expression.map(|expr| Statement::Let(LetStatement::new(Keyword::LET, identifier, expr)))
@@ -313,11 +321,17 @@ impl<'a> Parser<'a> {
         // Eg: return <expression>;
         self.next_token(); // skip return
 
-        // TODO: parse expredssion
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
-        if self.peek_token == Token::Semicolon {
-            self.next_token();
+        if self.peek_token != Token::Semicolon {
+            self.errors.push(format!(
+                "Expected ';' after return expression, got {}",
+                self.peek_token
+            ));
+            self.skip_to_semicolon();
+            return None;
         }
+
+        self.next_token(); // consume ;
 
         expression.map(|expr| Statement::Return(ReturnStatement::new(Keyword::RETURN, expr)))
     }
@@ -328,8 +342,13 @@ impl<'a> Parser<'a> {
     fn parse_expression_statement(&mut self) -> Option<Statement> {
         let token = self.curr_token.clone();
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
-        if self.peek_token == Token::Semicolon {
+        if self.peek_token == Token::Semicolon || self.peek_token == Token::EOF {
             self.next_token();
+        } else {
+            self.errors.push(format!(
+                "Expected ';' after expression, got {}",
+                self.peek_token
+            ));
         }
 
         match expression {
