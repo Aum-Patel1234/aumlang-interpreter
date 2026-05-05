@@ -4,8 +4,9 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            Boolean, Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral,
-            LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
+            BlockStatement, Boolean, Expression, ExpressionStatement, Identifier, IfExpression,
+            InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program,
+            ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -63,6 +64,7 @@ impl<'a> Parser<'a> {
         p.register_prefix(TokenKind::Keyword(Keyword::TRUE), Parser::parse_boolean);
         p.register_prefix(TokenKind::Keyword(Keyword::FALSE), Parser::parse_boolean);
         p.register_prefix(TokenKind::LParen, Parser::parse_grouped_expression);
+        p.register_prefix(TokenKind::Keyword(Keyword::IF), Parser::parse_if_expression);
 
         // infix_parse_fns
         p.register_infix(
@@ -211,6 +213,70 @@ impl<'a> Parser<'a> {
         }
         expr
     }
+    fn parse_if_expression(&mut self) -> Option<Expression> {
+        // if <condition> {consequence} else {alternative}
+        if !self.expect_peek(Token::LParen) {
+            return None;
+        }
+        self.next_token(); // skip if token
+
+        let condition = self.parse_expression(OperatorPrecedence::Lowest)?;
+        if !self.expect_peek(Token::RParen) {
+            return None;
+        }
+        if !self.expect_peek(Token::LBrace) {
+            return None;
+        }
+
+        let consequence = self.parse_block_statement()?;
+        if self.curr_token == Token::EOF || self.peek_token != Token::Keyword(Keyword::ELSE) {
+            return Some(Expression::IfExpression(IfExpression::new(
+                condition,
+                consequence,
+                None,
+            )));
+        }
+
+        let alternative = if self.peek_token == Token::Keyword(Keyword::ELSE) {
+            self.next_token(); // skip }
+
+            // skip else
+            if !self.expect_peek(Token::LBrace) {
+                return None;
+            }
+
+            self.parse_block_statement()
+        } else {
+            None
+        };
+
+        Some(Expression::IfExpression(IfExpression::new(
+            condition,
+            consequence,
+            alternative,
+        )))
+    }
+    fn parse_block_statement(&mut self) -> Option<BlockStatement> {
+        self.next_token(); // skip {
+        // println!("Block - {}", self.curr_token);
+
+        let mut statements: Vec<Statement> = Vec::new();
+        while self.curr_token != Token::EOF && self.curr_token != Token::RBrace {
+            let statement = self.parse_statement();
+
+            if let Some(stmt) = statement {
+                statements.push(stmt);
+            }
+
+            self.next_token();
+        }
+        // if self.curr_token != Token::EOF && self.curr_token == Token::RBrace {
+        //     self.next_token(); // skip {
+        // }
+
+        Some(BlockStatement { statements })
+    }
+
     fn parse_prefix_expression(&mut self) -> Option<Expression> {
         let op = match &self.curr_token {
             Token::Operator(op) => op.clone(),
@@ -265,15 +331,7 @@ impl<'a> Parser<'a> {
 
         while self.curr_token != Token::EOF {
             // println!("{}", self.curr_token);
-            let statement: Option<Statement> = match &self.curr_token {
-                Token::Keyword(kw) => match kw {
-                    Keyword::LET => self.parse_let_statement(),
-                    Keyword::RETURN => self.parse_return_statement(),
-                    Keyword::IF => self.parse_if_statement(),
-                    _ => self.parse_expression_statement(),
-                },
-                _ => self.parse_expression_statement(),
-            };
+            let statement = self.parse_statement();
 
             if let Some(stmt) = statement {
                 program.statements.push(stmt);
@@ -283,6 +341,18 @@ impl<'a> Parser<'a> {
         }
 
         program
+    }
+
+    fn parse_statement(&mut self) -> Option<Statement> {
+        match &self.curr_token {
+            Token::Keyword(kw) => match kw {
+                Keyword::LET => self.parse_let_statement(),
+                Keyword::RETURN => self.parse_return_statement(),
+                // Keyword::IF => self.parse_if_statement(),
+                _ => self.parse_expression_statement(),
+            },
+            _ => self.parse_expression_statement(),
+        }
     }
 
     fn skip_to_semicolon(&mut self) {
@@ -335,14 +405,13 @@ impl<'a> Parser<'a> {
 
         expression.map(|expr| Statement::Return(ReturnStatement::new(Keyword::RETURN, expr)))
     }
-    fn parse_if_statement(&self) -> Option<Statement> {
-        // TODO:
-        None
-    }
     fn parse_expression_statement(&mut self) -> Option<Statement> {
         let token = self.curr_token.clone();
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
-        if self.peek_token == Token::Semicolon || self.peek_token == Token::EOF {
+        if self.peek_token == Token::Semicolon
+            || self.peek_token == Token::EOF
+            || self.peek_token == Token::RBrace
+        {
             self.next_token();
         } else {
             self.errors.push(format!(

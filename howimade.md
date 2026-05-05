@@ -27,4 +27,8 @@
   - Main Parser Logic -> Pratt Parser
 
   - for grouped expressions giving RBrace lowest precedence would give subtle bugs.
+    (Main reason: as our parser is designed it treats it as Prefix function)
+
+  - In If-else there were many off by one parsing errors beware.
+    Eg:  if <condition> {consequence} else {alternative}
 

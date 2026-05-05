@@ -237,7 +237,7 @@ fn test_parsing_prefix_expressions() {
 
         assert_eq!(program.statements.len(), 1);
         let stmt = &program.statements[0];
-        println!("\n\n{:?}\n\n", stmt);
+        // println!("\n\n{:?}\n\n", stmt);
 
         match stmt {
             Statement::Expression(expression_statement) => match &expression_statement.expression {
@@ -546,4 +546,41 @@ fn test_parsing_prefix_expressions_with_booleans() {
 
         test_literal_expression(&prefix.right, value);
     }
+}
+
+#[test]
+fn test_if_expression() {
+    let input = "if (x<y) {x}";
+
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+
+    assert_eq!(program.statements.len(), 1);
+    let stmt = match &program.statements[0] {
+        Statement::Expression(es) => es,
+        stmt => panic!("Expected ExpressionStatement, found {}", stmt.string()),
+    };
+    let ie = match &stmt.expression {
+        Expression::IfExpression(ie) => ie,
+        expr => panic!("Expected IfExpression, found {}", expr.string()),
+    };
+
+    let condition = &ie.condition;
+
+    test_infix_expression(
+        condition,
+        Value::StringLiteral("x".to_string()),
+        "<",
+        Value::StringLiteral("y".to_string()),
+    );
+
+    assert_eq!(ie.consequence.statements.len(), 1);
+    let consequence = match &ie.consequence.statements[0] {
+        Statement::Expression(es) => es,
+        _ => panic!("Expected ExpressionStatement in consequence"),
+    };
+
+    test_identifier(&consequence.expression, "x");
 }

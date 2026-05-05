@@ -13,6 +13,7 @@ pub enum Statement {
     Let(LetStatement),
     Return(ReturnStatement),
     Expression(ExpressionStatement),
+    BlockStatement(BlockStatement),
 }
 impl Node for Statement {
     fn token_literal(&self) -> String {
@@ -20,14 +21,16 @@ impl Node for Statement {
             Statement::Let(s) => s.token_literal(),
             Statement::Return(s) => s.token_literal(),
             Statement::Expression(expression_statement) => expression_statement.token_literal(),
+            Statement::BlockStatement(block_statement) => block_statement.token_literal(),
         }
     }
 
     fn string(&self) -> String {
         match &self {
-            Statement::Let(let_statement) => let_statement.string(),
             Statement::Return(return_statement) => return_statement.string(),
+            Statement::Let(let_statement) => let_statement.string(),
             Statement::Expression(expression_statement) => expression_statement.string(),
+            Statement::BlockStatement(block_statement) => block_statement.string(),
         }
     }
 }
@@ -40,6 +43,7 @@ pub enum Expression {
     PrefixExpression(PrefixExpression),
     InfixExpression(InfixExpression),
     Boolean(Boolean),
+    IfExpression(IfExpression),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
@@ -49,6 +53,7 @@ impl Node for Expression {
             Expression::PrefixExpression(prefix_expression) => prefix_expression.token_literal(),
             Expression::InfixExpression(infix_expression) => infix_expression.token_literal(),
             Expression::Boolean(boolean) => boolean.token_literal(),
+            Expression::IfExpression(if_expression) => if_expression.token_literal(),
         }
     }
 
@@ -59,6 +64,7 @@ impl Node for Expression {
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
             Expression::Boolean(boolean) => boolean.string(),
+            Expression::IfExpression(if_expression) => if_expression.string(),
         }
     }
 }
@@ -142,6 +148,45 @@ impl Node for Boolean {
 
     fn string(&self) -> String {
         self.value.to_string()
+    }
+}
+
+// If Expression
+#[derive(Debug)]
+pub struct IfExpression {
+    pub condition: Box<Expression>,
+    pub consequence: BlockStatement,
+    pub alternative: Option<BlockStatement>,
+}
+impl IfExpression {
+    pub fn new(
+        condition: Expression,
+        consequence: BlockStatement,
+        alternative: Option<BlockStatement>,
+    ) -> Self {
+        IfExpression {
+            condition: Box::new(condition),
+            consequence,
+            alternative,
+        }
+    }
+}
+impl Node for IfExpression {
+    fn token_literal(&self) -> String {
+        Token::Keyword(Keyword::IF).to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
+        out.push_str(&Token::Keyword(Keyword::IF).to_string());
+        out.push_str(&self.condition.string());
+        out.push(' ');
+        out.push_str(&self.consequence.string());
+        if let Some(b) = &self.alternative {
+            out.push_str("else");
+            out.push_str(&b.string());
+        }
+        out
     }
 }
 
@@ -316,6 +361,7 @@ impl Node for ReturnStatement {
                 out.push_str(&infix_expression.string())
             }
             Expression::Boolean(boolean) => out.push_str(&boolean.string()),
+            Expression::IfExpression(if_expression) => out.push_str(&if_expression.string()),
         }
         out.push(';');
 
@@ -345,6 +391,28 @@ impl Node for ExpressionStatement {
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
             Expression::Boolean(boolean) => boolean.string(),
+            Expression::IfExpression(if_expression) => if_expression.string(),
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct BlockStatement {
+    pub statements: Vec<Statement>,
+}
+
+impl Node for BlockStatement {
+    fn token_literal(&self) -> String {
+        Token::LBrace.to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
+
+        for stmt in &self.statements {
+            out.push_str(&stmt.string());
+        }
+
+        out
     }
 }
