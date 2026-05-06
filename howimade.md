@@ -32,3 +32,6 @@
   - In If-else there were many off by one parsing errors beware.
     Eg:  if <condition> {consequence} else {alternative}
 
+  - Functions:
+    Eg: fn <parameters> <block statement>
+

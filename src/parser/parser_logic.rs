@@ -4,8 +4,8 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            BlockStatement, Boolean, Expression, ExpressionStatement, Identifier, IfExpression,
-            InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program,
+            BlockStatement, Boolean, Expression, ExpressionStatement, FunctionLiteral, Identifier,
+            IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program,
             ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
@@ -65,6 +65,10 @@ impl<'a> Parser<'a> {
         p.register_prefix(TokenKind::Keyword(Keyword::FALSE), Parser::parse_boolean);
         p.register_prefix(TokenKind::LParen, Parser::parse_grouped_expression);
         p.register_prefix(TokenKind::Keyword(Keyword::IF), Parser::parse_if_expression);
+        p.register_prefix(
+            TokenKind::Keyword(Keyword::FUNCTION),
+            Parser::parse_function_literal,
+        );
 
         // infix_parse_fns
         p.register_infix(
@@ -275,6 +279,55 @@ impl<'a> Parser<'a> {
         // }
 
         Some(BlockStatement { statements })
+    }
+    fn parse_function_args(&mut self) -> Option<Vec<Identifier>> {
+        let mut args: Vec<Identifier> = Vec::new();
+        while self.curr_token != Token::EOF && self.curr_token != Token::RParen {
+            let ident = match Identifier::new(self.curr_token.clone()) {
+                Ok(i) => Some(i),
+                Err(e) => {
+                    self.errors.push(e);
+                    None
+                }
+            };
+            if let Some(arg) = ident {
+                args.push(arg);
+            }
+
+            if self.peek_token == Token::Comma {
+                self.next_token(); // move to comma
+                self.next_token(); // move to next identifier
+            } else if self.peek_token == Token::RParen {
+                self.next_token(); // move to RParen
+                break;
+            } else {
+                self.errors.push(format!(
+                    "Expected Comma or RParen, found {} in fn args",
+                    self.peek_token
+                ));
+                return None;
+            }
+        }
+
+        Some(args)
+    }
+    fn parse_function_literal(&mut self) -> Option<Expression> {
+        // Eg: fn <parameters> <block statement>
+        if !self.expect_peek(Token::LParen) {
+            // skip fn
+            return None;
+        }
+        self.next_token(); // skip LParen
+
+        let args = self.parse_function_args()?;
+        if !self.expect_peek(Token::LBrace) {
+            return None;
+        }
+        let body = self.parse_block_statement()?;
+
+        Some(Expression::FunctionLiteral(FunctionLiteral::new(
+            args, body,
+        )))
     }
 
     fn parse_prefix_expression(&mut self) -> Option<Expression> {

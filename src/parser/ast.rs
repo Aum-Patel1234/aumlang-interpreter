@@ -44,6 +44,7 @@ pub enum Expression {
     InfixExpression(InfixExpression),
     Boolean(Boolean),
     IfExpression(IfExpression),
+    FunctionLiteral(FunctionLiteral),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
@@ -54,6 +55,7 @@ impl Node for Expression {
             Expression::InfixExpression(infix_expression) => infix_expression.token_literal(),
             Expression::Boolean(boolean) => boolean.token_literal(),
             Expression::IfExpression(if_expression) => if_expression.token_literal(),
+            Expression::FunctionLiteral(function_literal) => function_literal.token_literal(),
         }
     }
 
@@ -65,12 +67,13 @@ impl Node for Expression {
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
             Expression::Boolean(boolean) => boolean.string(),
             Expression::IfExpression(if_expression) => if_expression.string(),
+            Expression::FunctionLiteral(function_literal) => function_literal.string(),
         }
     }
 }
 
 // Identifier
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Identifier {
     pub value: String,
 }
@@ -186,6 +189,48 @@ impl Node for IfExpression {
             out.push_str("else");
             out.push_str(&b.string());
         }
+        out
+    }
+}
+
+#[derive(Debug)]
+pub struct FunctionLiteral {
+    // token: Token,
+    // QUESTION: Weather it being Vec<Expression> would be good ?
+    // it would enable to parse a=9, fn(x,y){x} as fn args
+    // For now idk
+    pub args: Vec<Identifier>,
+    pub body: BlockStatement,
+}
+impl FunctionLiteral {
+    pub fn new(args: Vec<Identifier>, body: BlockStatement) -> Self {
+        FunctionLiteral {
+            // token: Token::Keyword(Keyword::FUNCTION),
+            args,
+            body,
+        }
+    }
+}
+impl Node for FunctionLiteral {
+    fn token_literal(&self) -> String {
+        Token::Keyword(Keyword::FUNCTION).to_string()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
+        out.push_str(&self.token_literal());
+        out.push_str(" ( ");
+        out.push_str(
+            &self
+                .args
+                .iter()
+                .map(|i| i.string())
+                .collect::<Vec<_>>()
+                .join(" , "),
+        );
+        out.push_str(" ){\n");
+        out.push_str(&self.body.string());
+        out.push('}');
         out
     }
 }
@@ -362,6 +407,9 @@ impl Node for ReturnStatement {
             }
             Expression::Boolean(boolean) => out.push_str(&boolean.string()),
             Expression::IfExpression(if_expression) => out.push_str(&if_expression.string()),
+            Expression::FunctionLiteral(function_literal) => {
+                out.push_str(&function_literal.string())
+            }
         }
         out.push(';');
 
@@ -392,6 +440,7 @@ impl Node for ExpressionStatement {
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
             Expression::Boolean(boolean) => boolean.string(),
             Expression::IfExpression(if_expression) => if_expression.string(),
+            Expression::FunctionLiteral(function_literal) => function_literal.string(),
         }
     }
 }

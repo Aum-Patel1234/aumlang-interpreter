@@ -11,125 +11,125 @@ use aumlang::{
     token::Value,
 };
 
-// #[test]
-// fn test_let_parser() {
-//     let input = r#"
-//         let x = 5;
-//         let y = 10;
-//         let foobar = 838383;
-//     "#;
-//
-//     let l = Lexer::new_lexer(input);
-//     let mut p = Parser::new(l);
-//
-//     let program = p.parse_program();
-//     p.check_parse_errors();
-//     let tests = ["x", "y", "foobar"];
-//
-//     assert_eq!(
-//         program.statements.len(),
-//         tests.len(),
-//         "Mismatch: number of parsed statements does not match number of tests"
-//     );
-//     for (i, test) in tests.iter().enumerate() {
-//         let stmt = program.statements.get(i);
-//         if let Some(s) = stmt
-//             && !test_let_statement(s, test)
-//         {
-//             return;
-//         }
-//     }
-// }
-// #[test]
-// fn test_parser_error() {
-//     let input = r#"
-//         let foobar = 838383;
-//         let x  5;
-//         let y - 10;
-//     "#;
-//
-//     let l = Lexer::new_lexer(input);
-//     let mut p = Parser::new(l);
-//
-//     let program = p.parse_program();
-//     assert!(
-//         !p.get_errors().is_empty(),
-//         "Expected parser errors but got none"
-//     );
-//
-//     // let tests = ["x", "y", "foobar"];
-//     assert_eq!(
-//         program.statements.len(),
-//         1,
-//         "Expected 1 statement, got {}",
-//         program.statements.len()
-//     );
-//     // for (i, test) in tests.iter().enumerate() {
-//     //     let stmt = program.statements.get(i);
-//     //     if let Some(s) = stmt
-//     //         && !test_let_statement(s, test)
-//     //     {
-//     //         return;
-//     //     }
-//     // }
-// }
+#[test]
+fn test_let_parser() {
+    let input = r#"
+        let x = 5;
+        let y = 10;
+        let foobar = 838383;
+    "#;
 
-// fn test_let_statement(s: &Statement, name: &str) -> bool {
-//     if s.token_literal() != "let" {
-//         return false;
-//     }
-//
-//     let lstmt = match s {
-//         Statement::Let(stmt) => stmt,
-//         _ => return false,
-//     };
-//     if lstmt.name.value != name {
-//         return false;
-//     }
-//
-//     if lstmt.name.token_literal() != name {
-//         return false;
-//     }
-//
-//     true
-// }
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
 
-// #[test]
-// fn test_return_statements() {
-//     let input = r#"
-//         return 5;
-//         return 10;
-//         return 993322;
-//     "#;
-//
-//     let l = Lexer::new_lexer(input);
-//     let mut p = Parser::new(l);
-//
-//     let program = p.parse_program();
-//     assert!(p.check_parse_errors());
-//
-//     assert_eq!(
-//         program.statements.len(),
-//         3,
-//         "program.statements does not contain 3 statements. got={}",
-//         program.statements.len()
-//     );
-//
-//     for stmt in program.statements.iter() {
-//         match stmt {
-//             Statement::Return(return_stmt) => {
-//                 assert_eq!(
-//                     return_stmt.token_literal(),
-//                     "return",
-//                     "returnStmt.token_literal not 'return'"
-//                 );
-//             }
-//             _ => {
-//                 panic!("stmt not ReturnStatement. got={:?}", stmt);
-//             }
-//         }
-//     }
-// }
+    let program = p.parse_program();
+    p.check_parse_errors();
+    let tests = ["x", "y", "foobar"];
+
+    assert_eq!(
+        program.statements.len(),
+        tests.len(),
+        "Mismatch: number of parsed statements does not match number of tests"
+    );
+    for (i, test) in tests.iter().enumerate() {
+        let stmt = program.statements.get(i);
+        if let Some(s) = stmt
+            && !test_let_statement(s, test)
+        {
+            return;
+        }
+    }
+}
+#[test]
+fn test_parser_error() {
+    let input = r#"
+        let foobar = 838383;
+        let x  5;
+        let y - 10;
+    "#;
+
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+
+    let program = p.parse_program();
+    assert!(
+        !p.get_errors().is_empty(),
+        "Expected parser errors but got none"
+    );
+
+    // let tests = ["x", "y", "foobar"];
+    assert_eq!(
+        program.statements.len(),
+        1,
+        "Expected 1 statement, got {}",
+        program.statements.len()
+    );
+    // for (i, test) in tests.iter().enumerate() {
+    //     let stmt = program.statements.get(i);
+    //     if let Some(s) = stmt
+    //         && !test_let_statement(s, test)
+    //     {
+    //         return;
+    //     }
+    // }
+}
+
+fn test_let_statement(s: &Statement, name: &str) -> bool {
+    if s.token_literal() != "let" {
+        return false;
+    }
+
+    let lstmt = match s {
+        Statement::Let(stmt) => stmt,
+        _ => return false,
+    };
+    if lstmt.name.value != name {
+        return false;
+    }
+
+    if lstmt.name.token_literal() != name {
+        return false;
+    }
+
+    true
+}
+
+#[test]
+fn test_return_statements() {
+    let input = r#"
+        return 5;
+        return 10;
+        return 993322;
+    "#;
+
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+
+    assert_eq!(
+        program.statements.len(),
+        3,
+        "program.statements does not contain 3 statements. got={}",
+        program.statements.len()
+    );
+
+    for stmt in program.statements.iter() {
+        match stmt {
+            Statement::Return(return_stmt) => {
+                assert_eq!(
+                    return_stmt.token_literal(),
+                    "return",
+                    "returnStmt.token_literal not 'return'"
+                );
+            }
+            _ => {
+                panic!("stmt not ReturnStatement. got={:?}", stmt);
+            }
+        }
+    }
+}
 
 #[test]
 fn test_mixed_statements() {
@@ -583,4 +583,81 @@ fn test_if_expression() {
     };
 
     test_identifier(&consequence.expression, "x");
+}
+
+#[test]
+fn test_function_literal_parsing() {
+    let input = "fn(x, y){x+y;}";
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+
+    assert_eq!(program.statements.iter().len(), 1);
+    let es = match &program.statements[0] {
+        Statement::Expression(es) => es,
+        s => panic!("Expected Expression, found {}", s.string()),
+    };
+    let fl = match &es.expression {
+        Expression::FunctionLiteral(function_literal) => function_literal,
+        e => panic!("Expected FunctionLiteral, found {}", e.string()),
+    };
+
+    assert_eq!(fl.args.len(), 2);
+    test_identifier(&Expression::Identifier(fl.args[0].clone()), "x");
+    test_identifier(&Expression::Identifier(fl.args[1].clone()), "y");
+    assert_eq!(fl.body.statements.len(), 1);
+
+    let stmt = match &fl.body.statements[0] {
+        Statement::Expression(es) => es,
+        s => panic!(
+            "Expected Expression in functions body, found {}",
+            s.string()
+        ),
+    };
+
+    test_infix_expression(
+        &stmt.expression,
+        Value::StringLiteral("x".to_string()),
+        "+",
+        Value::StringLiteral("y".to_string()),
+    );
+}
+#[test]
+fn test_function_parameter_parsing() {
+    let tests = [
+        ("fn() {};", vec![]),
+        ("fn(x) {};", vec!["x"]),
+        ("fn(x, y, z) {};", vec!["x", "y", "z"]),
+    ];
+
+    for (input, expected_params) in tests {
+        let l = Lexer::new_lexer(input);
+        let mut p = Parser::new(l);
+        let program = p.parse_program();
+
+        assert!(p.check_parse_errors());
+
+        assert_eq!(program.statements.len(), 1);
+
+        let stmt = match &program.statements[0] {
+            Statement::Expression(es) => es,
+            _ => panic!("stmt is not ExpressionStatement"),
+        };
+
+        let function = match &stmt.expression {
+            Expression::FunctionLiteral(fl) => fl,
+            _ => panic!("expression is not FunctionLiteral"),
+        };
+
+        assert_eq!(
+            function.args.len(),
+            expected_params.len(),
+            "wrong number of params"
+        );
+
+        for (i, ident) in expected_params.iter().enumerate() {
+            test_identifier(&Expression::Identifier(function.args[i].clone()), ident);
+        }
+    }
 }
