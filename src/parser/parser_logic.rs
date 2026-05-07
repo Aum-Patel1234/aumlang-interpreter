@@ -4,9 +4,9 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            BlockStatement, Boolean, Expression, ExpressionStatement, FunctionLiteral, Identifier,
-            IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program,
-            ReturnStatement, Statement,
+            BlockStatement, Boolean, CallExpression, Expression, ExpressionStatement,
+            FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral,
+            LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -103,6 +103,7 @@ impl<'a> Parser<'a> {
             TokenKind::Operator(Operator::NEQ),
             Parser::parse_infix_expression,
         );
+        p.register_infix(TokenKind::LParen, Parser::parse_function_call_expression);
 
         p
     }
@@ -168,6 +169,7 @@ impl<'a> Parser<'a> {
     pub fn peek_precedence(&self) -> OperatorPrecedence {
         match &self.peek_token {
             Token::Operator(op) => op.precedence(),
+            Token::LParen => OperatorPrecedence::Call,
             _ => OperatorPrecedence::Lowest,
         }
     }
@@ -376,6 +378,31 @@ impl<'a> Parser<'a> {
         )))
     }
 
+    fn parse_function_call_expression(&mut self, left: Expression) -> Option<Expression> {
+        // Eg: <expression>(<comma separated expressions>)
+        let right = self.parse_call_args()?;
+        Some(Expression::CallExpression(CallExpression::new(left, right)))
+    }
+    fn parse_call_args(&mut self) -> Option<Vec<Expression>> {
+        self.next_token(); // skip (
+        let mut expressions: Vec<Expression> = Vec::new();
+        while self.curr_token != Token::RParen && self.curr_token != Token::EOF {
+            let expr = self.parse_expression(OperatorPrecedence::Lowest)?;
+            expressions.push(expr);
+
+            if self.peek_token == Token::RParen {
+                self.next_token();
+                break;
+            }
+            if !self.expect_peek(Token::Comma) {
+                return None;
+            }
+
+            self.next_token(); // move ahead ,
+        }
+        Some(expressions)
+    }
+
     // parse program
     pub fn parse_program(&mut self) -> Program {
         let mut program = Program {
@@ -437,6 +464,9 @@ impl<'a> Parser<'a> {
 
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
         self.skip_to_semicolon();
+        if self.peek_token == Token::Semicolon {
+            self.next_token(); // consume ;
+        }
 
         expression.map(|expr| Statement::Let(LetStatement::new(Keyword::LET, identifier, expr)))
     }
@@ -454,7 +484,9 @@ impl<'a> Parser<'a> {
             return None;
         }
 
-        self.next_token(); // consume ;
+        if self.peek_token == Token::Semicolon {
+            self.next_token(); // consume ;
+        }
 
         expression.map(|expr| Statement::Return(ReturnStatement::new(Keyword::RETURN, expr)))
     }
@@ -494,7 +526,7 @@ impl<'a> Parser<'a> {
         };
 
         let mut expr = prefix(self)?;
-        // println!("{:?}", expr);
+        // println!("expr: {}", expr.string());
 
         while self.peek_token != Token::Semicolon && precedence < self.peek_precedence() {
             let infix = match self.infix_parse_fns.get(&self.peek_token.kind()) {

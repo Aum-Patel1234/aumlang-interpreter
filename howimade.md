@@ -35,3 +35,6 @@
   - Functions:
     Eg: fn <parameters> <block statement>
 
+    Fn calls:
+    Eg: <expression>(<comma separated expressions>)
+

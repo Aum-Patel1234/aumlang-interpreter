@@ -45,6 +45,7 @@ pub enum Expression {
     Boolean(Boolean),
     IfExpression(IfExpression),
     FunctionLiteral(FunctionLiteral),
+    CallExpression(CallExpression),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
@@ -56,6 +57,7 @@ impl Node for Expression {
             Expression::Boolean(boolean) => boolean.token_literal(),
             Expression::IfExpression(if_expression) => if_expression.token_literal(),
             Expression::FunctionLiteral(function_literal) => function_literal.token_literal(),
+            Expression::CallExpression(call_expression) => call_expression.token_literal(),
         }
     }
 
@@ -68,6 +70,7 @@ impl Node for Expression {
             Expression::Boolean(boolean) => boolean.string(),
             Expression::IfExpression(if_expression) => if_expression.string(),
             Expression::FunctionLiteral(function_literal) => function_literal.string(),
+            Expression::CallExpression(call_expression) => call_expression.string(),
         }
     }
 }
@@ -199,6 +202,7 @@ pub struct FunctionLiteral {
     // QUESTION: Weather it being Vec<Expression> would be good ?
     // it would enable to parse a=9, fn(x,y){x} as fn args
     // For now idk
+    // Ans: now i know its beign done in the function call part not here.
     pub args: Vec<Identifier>,
     pub body: BlockStatement,
 }
@@ -226,11 +230,46 @@ impl Node for FunctionLiteral {
                 .iter()
                 .map(|i| i.string())
                 .collect::<Vec<_>>()
-                .join(" , "),
+                .join(", "),
         );
         out.push_str(" ){\n");
         out.push_str(&self.body.string());
         out.push('}');
+        out
+    }
+}
+
+#[derive(Debug)]
+pub struct CallExpression {
+    pub function: Box<Expression>,
+    pub args: Vec<Expression>,
+}
+impl CallExpression {
+    pub fn new(function: Expression, args: Vec<Expression>) -> Self {
+        CallExpression {
+            function: Box::new(function),
+            args,
+        }
+    }
+}
+impl Node for CallExpression {
+    fn token_literal(&self) -> String {
+        self.function.token_literal()
+    }
+
+    fn string(&self) -> String {
+        let mut out = String::new();
+        out.push_str(&self.token_literal());
+        out.push('(');
+        out.push_str(
+            &self
+                .args
+                .iter()
+                .map(|i| i.string())
+                .collect::<Vec<_>>()
+                .join(", "),
+        );
+        out.push(')');
         out
     }
 }
@@ -410,6 +449,7 @@ impl Node for ReturnStatement {
             Expression::FunctionLiteral(function_literal) => {
                 out.push_str(&function_literal.string())
             }
+            Expression::CallExpression(call_expression) => out.push_str(&call_expression.string()),
         }
         out.push(';');
 
@@ -441,6 +481,7 @@ impl Node for ExpressionStatement {
             Expression::Boolean(boolean) => boolean.string(),
             Expression::IfExpression(if_expression) => if_expression.string(),
             Expression::FunctionLiteral(function_literal) => function_literal.string(),
+            Expression::CallExpression(call_expression) => call_expression.string(),
         }
     }
 }

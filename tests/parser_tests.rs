@@ -357,6 +357,15 @@ fn test_operator_precedence_parsing() {
         ),
         ("-(5 + 5)", "(-(Value::Double(5) + Value::Double(5)))"),
         ("!(true == true)", "(!(Value::True == Value::True))"),
+        ("a + add(b * c) + d", "((a + add((b * c))) + d)"),
+        (
+            "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+            "add(a, b, Value::Double(1), (Value::Double(2) * Value::Double(3)), (Value::Double(4) + Value::Double(5)), add(Value::Double(6), (Value::Double(7) * Value::Double(8))))",
+        ),
+        (
+            "add(a + b + c * d / f + g)",
+            "add((((a + b) + ((c * d) / f)) + g))",
+        ),
     ];
 
     for (input, expected) in tests {
@@ -658,6 +667,91 @@ fn test_function_parameter_parsing() {
 
         for (i, ident) in expected_params.iter().enumerate() {
             test_identifier(&Expression::Identifier(function.args[i].clone()), ident);
+        }
+    }
+}
+
+#[test]
+fn test_function_call_expression_parsing() {
+    let input = "add(1, 2*3, 4+5);";
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = match &program.statements[0] {
+        Statement::Expression(es) => es,
+        _ => panic!("stmt is not ExpressionStatement"),
+    };
+    let ce = match &stmt.expression {
+        Expression::CallExpression(call_expression) => call_expression,
+        e => panic!("Expected CallExpression, found {}", e.string()),
+    };
+
+    test_identifier(&ce.function, "add");
+    assert_eq!(ce.args.len(), 3);
+    test_literal_expression(&ce.args[0], Value::Double(1f64));
+    test_infix_expression(&ce.args[1], Value::Double(2f64), "*", Value::Double(3f64));
+    test_infix_expression(&ce.args[2], Value::Double(4f64), "+", Value::Double(5f64));
+}
+#[test]
+fn test_let_statements() {
+    struct Test<'a> {
+        input: &'a str,
+        expected_identifier: &'a str,
+        expected_value: Value,
+    }
+
+    let tests = [
+        Test {
+            input: "let x = 5;",
+            expected_identifier: "x",
+            expected_value: Value::Double(5.0),
+        },
+        Test {
+            input: "let y = true;",
+            expected_identifier: "y",
+            expected_value: Value::True,
+        },
+        Test {
+            input: "let foobar = y;",
+            expected_identifier: "foobar",
+            expected_value: Value::StringLiteral("y".to_string()),
+        },
+    ];
+
+    for tt in tests {
+        let l = Lexer::new_lexer(tt.input);
+        let mut p = Parser::new(l);
+
+        let program = p.parse_program();
+
+        assert!(p.check_parse_errors());
+
+        assert_eq!(
+            program.statements.len(),
+            1,
+            "program.statements does not contain 1 statement"
+        );
+
+        let stmt = &program.statements[0];
+
+        test_let_statement(stmt, tt.expected_identifier);
+
+        let val = match stmt {
+            Statement::Let(ls) => &ls.value,
+            _ => panic!("stmt is not LetStatement"),
+        };
+
+        match &tt.expected_value {
+            Value::StringLiteral(s) => {
+                test_identifier(val, s);
+            }
+            _ => {
+                test_literal_expression(val, tt.expected_value.clone());
+            }
         }
     }
 }
