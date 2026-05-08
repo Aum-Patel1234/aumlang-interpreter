@@ -39,7 +39,7 @@ impl Node for Statement {
 #[derive(Debug)]
 pub enum Expression {
     Identifier(Identifier),
-    IntegerLiteral(IntegerLiteral),
+    DoubleLiteral(DoubleLiteral),
     PrefixExpression(PrefixExpression),
     InfixExpression(InfixExpression),
     Boolean(Boolean),
@@ -51,7 +51,7 @@ impl Node for Expression {
     fn token_literal(&self) -> String {
         match self {
             Expression::Identifier(expr) => expr.token_literal(),
-            Expression::IntegerLiteral(integer_literal) => integer_literal.token_literal(),
+            Expression::DoubleLiteral(double_literal) => double_literal.token_literal(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.token_literal(),
             Expression::InfixExpression(infix_expression) => infix_expression.token_literal(),
             Expression::Boolean(boolean) => boolean.token_literal(),
@@ -64,7 +64,7 @@ impl Node for Expression {
     fn string(&self) -> String {
         match &self {
             Expression::Identifier(identifier) => identifier.string(),
-            Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
+            Expression::DoubleLiteral(double_literal) => double_literal.string(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
             Expression::Boolean(boolean) => boolean.string(),
@@ -103,22 +103,22 @@ impl Node for Identifier {
     }
 }
 
-// IntegerLiteral
+// DoubleLiteral
 #[derive(Debug)]
-pub struct IntegerLiteral {
+pub struct DoubleLiteral {
     pub token: Token,
     pub val: f64,
 }
-impl IntegerLiteral {
-    pub fn new(token: Token) -> Result<IntegerLiteral, String> {
+impl DoubleLiteral {
+    pub fn new(token: Token) -> Result<DoubleLiteral, String> {
         if let Token::Value(Value::Double(v)) = token {
-            Ok(IntegerLiteral { token, val: v })
+            Ok(DoubleLiteral { token, val: v })
         } else {
             Err(format!("Expected numeric literal, got {:?}", token))
         }
     }
 }
-impl Node for IntegerLiteral {
+impl Node for DoubleLiteral {
     fn token_literal(&self) -> String {
         self.token.to_string()
     }
@@ -437,7 +437,7 @@ impl Node for ReturnStatement {
         out.push_str(&(self.token_literal() + " "));
         match &self.return_val {
             Expression::Identifier(identifier) => out.push_str(identifier.string().as_str()),
-            Expression::IntegerLiteral(integer_literal) => out.push_str(&integer_literal.string()),
+            Expression::DoubleLiteral(double_literal) => out.push_str(&double_literal.string()),
             Expression::PrefixExpression(prefix_expression) => {
                 out.push_str(&prefix_expression.string())
             }
@@ -475,7 +475,7 @@ impl Node for ExpressionStatement {
     fn string(&self) -> String {
         match &self.expression {
             Expression::Identifier(identifier) => identifier.string(),
-            Expression::IntegerLiteral(integer_literal) => integer_literal.string(),
+            Expression::DoubleLiteral(double_literal) => double_literal.string(),
             Expression::PrefixExpression(prefix_expression) => prefix_expression.string(),
             Expression::InfixExpression(infix_expression) => infix_expression.string(),
             Expression::Boolean(boolean) => boolean.string(),

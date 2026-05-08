@@ -1,4 +1,6 @@
-use crate::{lexer::Lexer, parser::parser_logic::Parser};
+use crate::{
+    eval::evaluate::eval, lexer::Lexer, object::obj::ObjectTrait, parser::parser_logic::Parser,
+};
 
 pub fn process_input(input: &str) {
     let lexer = Lexer::new_lexer(input);
@@ -19,7 +21,11 @@ pub fn process_input(input: &str) {
     // for stmt in &program.statements {
     //     println!("{:?}", stmt.string());
     // }
-    println!("{}", program);
+    // println!("{}", program);
+    let evaluated = eval(&program);
+    if let Some(e) = evaluated {
+        println!("{}", e.inspect());
+    }
 
     // print_tokens(&tokens);
 }

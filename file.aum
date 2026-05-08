@@ -18,6 +18,11 @@ let z = a+b;
 b = 10 + 11 * 5 + 1;
 print(b9);
 let c = true;
+if(a > 10){
+  a = 1;
+}else{
+  a=10
+}
 # func newFunc(a) {
 #   getRefCount a
 #   return a+1

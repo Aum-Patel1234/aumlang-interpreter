@@ -205,7 +205,7 @@ fn test_mixed_statements() {
 }
 
 #[test]
-fn test_integer_literal_expression() {
+fn test_double_literal_expression() {
     let input = "5;";
 
     let l = Lexer::new_lexer(input);
@@ -218,8 +218,8 @@ fn test_integer_literal_expression() {
 
     match stmt {
         Statement::Expression(expression_statement) => match &expression_statement.expression {
-            Expression::IntegerLiteral(il) => assert_eq!(il.val, 5.0),
-            _ => panic!("Expeceted IntegerLiteral"),
+            Expression::DoubleLiteral(il) => assert_eq!(il.val, 5.0),
+            _ => panic!("Expeceted DoubleLiteral"),
         },
         _ => panic!("Expected ExpressionStatement"),
     }
@@ -245,11 +245,11 @@ fn test_parsing_prefix_expressions() {
                     assert_eq!(&pe.op.to_string(), prefix);
 
                     match pe.right.as_ref() {
-                        Expression::IntegerLiteral(il) => assert_eq!(il.val, ans),
-                        _ => panic!("Expected IntegerLiteral as right expression."),
+                        Expression::DoubleLiteral(il) => assert_eq!(il.val, ans),
+                        _ => panic!("Expected DoubleLiteral as right expression."),
                     }
                 }
-                _ => panic!("Expeceted IntegerLiteral"),
+                _ => panic!("Expeceted DoubleLiteral"),
             },
             _ => panic!("Expected ExpressionStatement"),
         }
@@ -297,10 +297,10 @@ fn test_parsing_infix_expressions() {
 
         // Left side
         match infix.left.as_ref() {
-            Expression::IntegerLiteral(il) => {
+            Expression::DoubleLiteral(il) => {
                 assert_eq!(il.val, left_val);
             }
-            _ => panic!("Expected left IntegerLiteral"),
+            _ => panic!("Expected left DoubleLiteral"),
         }
 
         // Operator
@@ -308,10 +308,10 @@ fn test_parsing_infix_expressions() {
 
         // Right side
         match infix.right.as_ref() {
-            Expression::IntegerLiteral(il) => {
+            Expression::DoubleLiteral(il) => {
                 assert_eq!(il.val, right_val);
             }
-            _ => panic!("Expected right IntegerLiteral"),
+            _ => panic!("Expected right DoubleLiteral"),
         }
     }
 }
@@ -389,7 +389,7 @@ fn test_identifier(exp: &Expression, value: &str) {
 }
 fn test_literal_expression(exp: &Expression, expected: Value) {
     match (exp, expected) {
-        (Expression::IntegerLiteral(lit), Value::Double(v)) => {
+        (Expression::DoubleLiteral(lit), Value::Double(v)) => {
             assert_eq!(lit.val, v, "literal value mismatch");
         }
         (Expression::Identifier(ident), Value::StringLiteral(s)) => {

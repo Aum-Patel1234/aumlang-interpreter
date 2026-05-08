@@ -4,8 +4,8 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            BlockStatement, Boolean, CallExpression, Expression, ExpressionStatement,
-            FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral,
+            BlockStatement, Boolean, CallExpression, DoubleLiteral, Expression,
+            ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression,
             LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
@@ -52,7 +52,7 @@ impl<'a> Parser<'a> {
 
         // prefix_parse_fns
         p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
-        p.register_prefix(TokenKind::Value, Parser::parse_integer_literal);
+        p.register_prefix(TokenKind::Value, Parser::parse_double_literal);
         p.register_prefix(
             TokenKind::Operator(Operator::Exclamation),
             Parser::parse_prefix_expression,
@@ -191,10 +191,10 @@ impl<'a> Parser<'a> {
             }
         }
     }
-    fn parse_integer_literal(&mut self) -> Option<Expression> {
-        let integer_literal = IntegerLiteral::new(self.curr_token.clone());
-        match integer_literal {
-            Ok(il) => Some(Expression::IntegerLiteral(il)),
+    fn parse_double_literal(&mut self) -> Option<Expression> {
+        let double_literal = DoubleLiteral::new(self.curr_token.clone());
+        match double_literal {
+            Ok(dl) => Some(Expression::DoubleLiteral(dl)),
             Err(e) => {
                 self.errors.push(e);
                 None
