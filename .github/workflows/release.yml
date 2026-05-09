@@ -1,5 +1,8 @@
 name: Release AumLang
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
@@ -9,9 +12,13 @@ jobs:
   build:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
 
     steps:
       - name: Checkout
@@ -43,7 +50,7 @@ jobs:
         run: |
           mkdir -p dist
           cp target/release/aumlang dist/
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
             tar -czf aumlang-linux.tar.gz -C dist .
           else
             tar -czf aumlang-macos.tar.gz -C dist .
@@ -53,15 +60,14 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           mkdir dist
-          copy target\release\aumlang.exe dist\
-          powershell Compress-Archive -Path dist\* -DestinationPath aumlang-windows.zip
+          Copy-Item target\release\aumlang.exe dist\
+          Compress-Archive -Path dist\* -DestinationPath aumlang-windows.zip
 
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            aumlang-linux.tar.gz
-            aumlang-macos.tar.gz
-            aumlang-windows.zip
+            *.tar.gz
+            *.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

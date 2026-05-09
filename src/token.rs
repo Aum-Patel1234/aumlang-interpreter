@@ -228,9 +228,11 @@ impl Token {
 
 impl Operator {
     pub fn precedence(&self) -> OperatorPrecedence {
+        // NOTE: Max bugs are here cause I forget to assign precedence
         match self {
             Operator::EQ | Operator::NEQ => OperatorPrecedence::Equals,
             Operator::LT | Operator::GT => OperatorPrecedence::LessGreater,
+            Operator::LTE | Operator::GTE => OperatorPrecedence::LessGreater,
             Operator::Plus | Operator::Minus => OperatorPrecedence::Sum,
             Operator::Star | Operator::Slash => OperatorPrecedence::Product,
             _ => OperatorPrecedence::Lowest,

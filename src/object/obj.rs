@@ -62,12 +62,19 @@ impl ObjectTrait for DoubleObject {
 }
 
 // boolean
+#[derive(PartialEq)]
 pub struct BooleanObject {
     pub value: bool,
 }
 impl BooleanObject {
     pub fn get(value: bool) -> &'static BooleanObject {
         if value { &TRUE } else { &FALSE }
+    }
+    pub fn get_from_num(value: f64) -> &'static BooleanObject {
+        if value == 0f64 { &FALSE } else { &TRUE }
+    }
+    pub fn not_get(&self) -> &'static BooleanObject {
+        if *self == TRUE { &FALSE } else { &TRUE }
     }
 }
 impl ObjectTrait for BooleanObject {

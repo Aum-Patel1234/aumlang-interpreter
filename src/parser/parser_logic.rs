@@ -88,6 +88,14 @@ impl<'a> Parser<'a> {
             Parser::parse_infix_expression,
         );
         p.register_infix(
+            TokenKind::Operator(Operator::GTE),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
+            TokenKind::Operator(Operator::LTE),
+            Parser::parse_infix_expression,
+        );
+        p.register_infix(
             TokenKind::Operator(Operator::Slash),
             Parser::parse_infix_expression,
         );

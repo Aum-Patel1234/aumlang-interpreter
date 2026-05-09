@@ -1,7 +1,7 @@
 use crate::{
     object::obj::{BooleanObject, DoubleObject, Object},
-    parser::ast::{Expression, Program, Statement},
-    token::Value,
+    parser::ast::{Expression, InfixExpression, PrefixExpression, Program, Statement},
+    token::{Operator, Value},
 };
 
 pub fn eval(node: &Program) -> Option<Object> {
@@ -29,14 +29,109 @@ fn eval_expression(expr: &Expression) -> Option<Object> {
         Expression::DoubleLiteral(double_literal) => Some(Object::Double(DoubleObject {
             value: double_literal.val,
         })),
-        // Expression::PrefixExpression(prefix_expression) => None,
-        // Expression::InfixExpression(infix_expression) => None,
+        Expression::PrefixExpression(prefix_expression) => {
+            eval_prefix_expression(prefix_expression)
+        }
+        Expression::InfixExpression(infix_expression) => eval_infix_expression(infix_expression),
         Expression::Boolean(boolean) => Some(Object::Boolean(BooleanObject::get(
             boolean.value == Value::True,
         ))),
         // Expression::IfExpression(if_expression) => None,
         // Expression::FunctionLiteral(function_literal) => None,
         // Expression::CallExpression(call_expression) => None,
+        _ => None,
+    }
+}
+
+fn eval_prefix_expression(prefix_expr: &PrefixExpression) -> Option<Object> {
+    let (op, right) = (&prefix_expr.op, &prefix_expr.right);
+    let val = eval_expression(right)?;
+
+    match op {
+        Operator::Minus => eval_minus_prefix_expression(&val),
+        Operator::Exclamation => eval_exclamation_operator(&val),
+        _ => None,
+    }
+}
+
+fn eval_minus_prefix_expression(val: &Object) -> Option<Object> {
+    match val {
+        Object::Double(double_object) => Some(Object::Double(DoubleObject {
+            value: -double_object.value,
+        })),
+        _ => None,
+    }
+}
+
+fn eval_exclamation_operator(val: &Object) -> Option<Object> {
+    match val {
+        Object::Double(double_object) => {
+            let obj = BooleanObject::get_from_num(double_object.value);
+            Some(Object::Boolean(obj.not_get()))
+        }
+        Object::Boolean(boolean_object) => Some(Object::Boolean(boolean_object.not_get())),
+        _ => Some(Object::Boolean(BooleanObject::get(true))),
+    }
+}
+
+fn eval_infix_expression(infix_expr: &InfixExpression) -> Option<Object> {
+    let (left_expr, op, right_expr) = (&infix_expr.left, &infix_expr.op, &infix_expr.right);
+    let left = eval_expression(left_expr)?;
+    let right = eval_expression(right_expr)?;
+
+    match (&left, &right) {
+        (Object::Double(_), Object::Double(_)) => {
+            let l = get_double_value_or_none(left)?;
+            let r = get_double_value_or_none(right)?;
+
+            let obj = match op {
+                Operator::Plus => Object::Double(DoubleObject { value: l + r }),
+                Operator::Minus => Object::Double(DoubleObject { value: l - r }),
+                Operator::Star => Object::Double(DoubleObject { value: l * r }),
+                Operator::Slash => Object::Double(DoubleObject { value: l / r }),
+
+                Operator::GT => Object::Boolean(BooleanObject::get(l > r)),
+                Operator::LT => Object::Boolean(BooleanObject::get(l < r)),
+                Operator::EQ => Object::Boolean(BooleanObject::get(l == r)),
+                Operator::NEQ => Object::Boolean(BooleanObject::get(l != r)),
+                Operator::GTE => Object::Boolean(BooleanObject::get(l >= r)),
+                Operator::LTE => Object::Boolean(BooleanObject::get(l <= r)),
+
+                _ => return None,
+            };
+
+            Some(obj)
+        }
+
+        // NOTE: here i could have assigned 1.0->true and 0.0->false and treated like double
+        // but i choose not to. then it would have behaved like node/python interpreter
+        (Object::Boolean(_), Object::Boolean(_)) => {
+            let l = get_boolean_or_none(left)?;
+            let r = get_boolean_or_none(right)?;
+
+            match op {
+                Operator::EQ => Some(Object::Boolean(BooleanObject::get(l == r))),
+                Operator::NEQ => Some(Object::Boolean(BooleanObject::get(l != r))),
+                _ => None,
+            }
+        }
+
+        _ => None,
+    }
+}
+
+#[inline]
+fn get_double_value_or_none(obj: Object) -> Option<f64> {
+    match obj {
+        Object::Double(double_object) => Some(double_object.value),
+        _ => None,
+    }
+}
+
+#[inline]
+fn get_boolean_or_none(obj: Object) -> Option<&'static BooleanObject> {
+    match obj {
+        Object::Boolean(bo) => Some(bo),
         _ => None,
     }
 }

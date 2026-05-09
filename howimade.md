@@ -11,7 +11,7 @@
 
 1. Think of every line as a Statement.
   - Eg: let <identifier> = <expression>;
-2. Make Expression, Statement and Node(interface)
+2. Make Expression, Statement and Node(interface).
   - Each program is a Vec<Statement>
 
   - Statement
@@ -25,6 +25,7 @@
             called binary expressions and prefix statement as unary expressions`
 
   - Main Parser Logic -> Pratt Parser
+    NOTE: Max bugs are here cause I forget to assign precedence in token.rs file at end
 
   - for grouped expressions giving RBrace lowest precedence would give subtle bugs.
     (Main reason: as our parser is designed it treats it as Prefix function)
@@ -38,3 +39,13 @@
     Fn calls:
     Eg: <expression>(<comma separated expressions>)
 
+### Evalution 
+  1. Create an Object enum to represent values.
+  2. Evalute as per required logic.
+
+    - make an TRUE,FALSE and NULL const obj values as these will not change so return 
+      same each time reducing using extra memory.
+
+    - Prefix Expression
+      1. read prefix parser above.
+      2. evaluate as per syntax and logic.
