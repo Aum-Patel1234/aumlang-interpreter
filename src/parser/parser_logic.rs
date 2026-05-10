@@ -243,7 +243,7 @@ impl<'a> Parser<'a> {
         }
 
         let consequence = self.parse_block_statement()?;
-        if self.curr_token == Token::EOF || self.peek_token != Token::Keyword(Keyword::ELSE) {
+        if self.peek_token != Token::Keyword(Keyword::ELSE) {
             return Some(Expression::IfExpression(IfExpression::new(
                 condition,
                 consequence,
@@ -272,7 +272,6 @@ impl<'a> Parser<'a> {
     }
     fn parse_block_statement(&mut self) -> Option<BlockStatement> {
         self.next_token(); // skip {
-        // println!("Block - {}", self.curr_token);
 
         let mut statements: Vec<Statement> = Vec::new();
         while self.curr_token != Token::EOF && self.curr_token != Token::RBrace {
@@ -436,7 +435,6 @@ impl<'a> Parser<'a> {
             Token::Keyword(kw) => match kw {
                 Keyword::LET => self.parse_let_statement(),
                 Keyword::RETURN => self.parse_return_statement(),
-                // Keyword::IF => self.parse_if_statement(),
                 _ => self.parse_expression_statement(),
             },
             _ => self.parse_expression_statement(),
@@ -501,17 +499,17 @@ impl<'a> Parser<'a> {
     fn parse_expression_statement(&mut self) -> Option<Statement> {
         let token = self.curr_token.clone();
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
-        if self.peek_token == Token::Semicolon
-            || self.peek_token == Token::EOF
-            || self.peek_token == Token::RBrace
-        {
+        // NOTE: most parse errors are near here
+        // println!("curr - {}, peek - {}", self.curr_token, self.peek_token);
+        if self.peek_token == Token::Semicolon {
             self.next_token();
-        } else {
-            self.errors.push(format!(
-                "Expected ';' after expression, got {}",
-                self.peek_token
-            ));
         }
+        // } else if self.peek_token != Token::EOF && self.peek_token != Token::RBrace {
+        //     self.errors.push(format!(
+        //         "Expected ';' after expression, got {}",
+        //         self.peek_token
+        //     ));
+        // }
 
         match expression {
             Some(expr) => {

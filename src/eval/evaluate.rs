@@ -1,24 +1,34 @@
 use crate::{
-    object::obj::{BooleanObject, DoubleObject, Object},
-    parser::ast::{Expression, InfixExpression, PrefixExpression, Program, Statement},
+    object::obj::{BooleanObject, DoubleObject, NullObject, Object, ReturnObject},
+    parser::ast::{
+        BlockStatement, Expression, IfExpression, InfixExpression, PrefixExpression, Program,
+        Statement,
+    },
     token::{Operator, Value},
 };
 
 pub fn eval(node: &Program) -> Option<Object> {
-    node.statements
-        .iter()
-        .filter_map(eval_statement)
-        .next_back()
+    let mut result = None;
+    for stmt in &node.statements {
+        result = eval_statement(stmt);
+        if let Some(Object::RetrunValue(val)) = result {
+            return Some(*val.value);
+        }
+    }
+    result
 }
 
 fn eval_statement(stmt: &Statement) -> Option<Object> {
     match stmt {
         // Statement::Let(let_statement) => None,
-        // Statement::Return(return_statement) => None,
+        Statement::Return(return_statement) => {
+            let obj = eval_expression(&return_statement.return_val)?;
+            Some(Object::RetrunValue(ReturnObject::new(obj)))
+        }
         Statement::Expression(expression_statement) => {
             eval_expression(&expression_statement.expression)
         }
-        // Statement::BlockStatement(block_statement) => None,
+        Statement::BlockStatement(block_statement) => eval_block_statement(block_statement),
         _ => None,
     }
 }
@@ -36,7 +46,7 @@ fn eval_expression(expr: &Expression) -> Option<Object> {
         Expression::Boolean(boolean) => Some(Object::Boolean(BooleanObject::get(
             boolean.value == Value::True,
         ))),
-        // Expression::IfExpression(if_expression) => None,
+        Expression::IfExpression(if_expression) => eval_if_expression(if_expression),
         // Expression::FunctionLiteral(function_literal) => None,
         // Expression::CallExpression(call_expression) => None,
         _ => None,
@@ -133,5 +143,38 @@ fn get_boolean_or_none(obj: Object) -> Option<&'static BooleanObject> {
     match obj {
         Object::Boolean(bo) => Some(bo),
         _ => None,
+    }
+}
+
+fn eval_block_statement(block_stmt: &BlockStatement) -> Option<Object> {
+    let mut result = None;
+    for stmt in &block_stmt.statements {
+        result = eval_statement(stmt);
+        if let Some(Object::RetrunValue(_)) = &result {
+            return result;
+        }
+    }
+    result
+}
+fn eval_if_expression(if_expr: &IfExpression) -> Option<Object> {
+    let IfExpression {
+        condition,
+        consequence,
+        alternative,
+    } = if_expr;
+
+    let obj = eval_expression(condition)?;
+    let flag = match obj {
+        Object::Boolean(boolean_object) => boolean_object.value,
+        Object::Double(double_object) => double_object.value != 0.0,
+        _ => false,
+    };
+
+    if flag {
+        eval_block_statement(consequence)
+    } else if let Some(alt) = alternative {
+        eval_block_statement(alt)
+    } else {
+        Some(Object::Null(NullObject::get()))
     }
 }

@@ -111,3 +111,53 @@ fn test_exclamation_operator() {
         test_boolean_object(evaluated, v);
     }
 }
+
+#[test]
+fn test_if_else_expression() {
+    let tests = [
+        ("if (true) { 10 }", Some(10.0)),
+        ("if (false) { 10 }", None),
+        ("if (1) { 10 }", Some(10.0)),
+        ("if (1 < 2) { 10 }", Some(10.0)),
+        ("if (1 > 2) { 10 }", None),
+        ("if (1 > 2) { 10 } else { 20 }", Some(20.0)),
+        ("if (1 < 2) { 10 } else { 20 }", Some(10.0)),
+    ];
+
+    for (input, expected) in tests {
+        let evaluated = test_eval(input);
+        match expected {
+            Some(v) => assert!(test_double_object(evaluated, v)),
+            None => assert!(test_null_obj(evaluated)),
+        }
+    }
+}
+
+fn test_null_obj(obj: Object) -> bool {
+    matches!(obj, Object::Null(_))
+}
+
+#[test]
+fn test_return_statements() {
+    let tests = [
+        ("return 10;", 10.0),
+        ("return 10; 9;", 10.0),
+        ("return 2 * 5; 9;", 10.0),
+        ("9; return 2 * 5; 9;", 10.0),
+        (
+            r#"
+            if (10 > 1) {
+                if (10 > 1) {
+                    return 10;
+                }
+                return 1;
+            }
+            "#,
+            10.0,
+        ),
+    ];
+    for (s, v) in tests {
+        let evaluated = test_eval(s);
+        assert!(test_double_object(evaluated, v))
+    }
+}
