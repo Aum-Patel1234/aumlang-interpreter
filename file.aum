@@ -7,21 +7,23 @@
 # 4. garbage collection 
 let a = 9;
 # b = "as a"  # bug here see in func get_num_tokens
-print(a);
+# print(a);
+a;
 
 let b = 9 + 1;
+b;
 let add = fn(a, b){
   return a+b;
 };
 
 let z = a+b;
-b = 10 + 11 * 5 + 1;
-print(b9);
+# b = 10 + 11 * 5 + 1;
+# print(b9);
 let c = true;
 if(a > 10){
-  a = 1;
+  a;
 }else{
-  a=10
+  b;
 }
 # func newFunc(a) {
 #   getRefCount a

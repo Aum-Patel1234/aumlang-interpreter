@@ -15,6 +15,8 @@ pub trait ObjectTrait {
     fn object_type(&self) -> ObjectType;
     fn inspect(&self) -> String;
 }
+
+#[derive(Clone)]
 pub enum Object {
     Double(DoubleObject),
     Boolean(&'static BooleanObject),
@@ -57,6 +59,7 @@ impl ObjectTrait for Object {
 }
 
 // double
+#[derive(Clone)]
 pub struct DoubleObject {
     pub value: f64,
 }
@@ -115,6 +118,7 @@ impl ObjectTrait for NullObject {
 }
 
 // return object
+#[derive(Clone)]
 pub struct ReturnObject {
     pub value: Box<Object>,
 }
@@ -139,6 +143,7 @@ impl ObjectTrait for ReturnObject {
 // NOTE: In a production-ready interpreter we’d want to attach a stack trace to such error
 // objects, add the line and column numbers of its origin and provide more than just a message.
 // Line and column numbers are attached to the tokens by the lexer
+#[derive(Clone)]
 pub struct ErrorObject {
     pub msg: String,
 }

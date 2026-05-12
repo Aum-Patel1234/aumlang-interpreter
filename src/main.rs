@@ -3,7 +3,7 @@ use std::{
     io::{self, Write},
 };
 
-use aumlang::processor::process_input;
+use aumlang::{environment::Environment, processor::process_input};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -17,6 +17,7 @@ fn main() {
 
 fn run_cli() {
     let mut input = String::new();
+    let mut env = Environment::default();
 
     loop {
         print!("aum > ");
@@ -34,7 +35,7 @@ fn run_cli() {
                 }
                 // println!("{}", trimmed_line);
 
-                process_input(trimmed_line);
+                process_input(trimmed_line, &mut env);
             }
             Err(e) => {
                 eprintln!("Error reading the input: {}", e);
@@ -45,9 +46,10 @@ fn run_cli() {
 
 fn run_file(args: &[String]) {
     let file_path = &args[1];
+    let mut env = Environment::default();
 
     match fs::read_to_string(file_path) {
-        Ok(content) => process_input(&content),
+        Ok(content) => process_input(&content, &mut env),
         Err(e) => eprintln!("Failed to read file: {}", e),
     }
 }

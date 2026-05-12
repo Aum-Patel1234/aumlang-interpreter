@@ -1,10 +1,11 @@
 use crate::{
+    environment::Environment,
     object::obj::{
         BooleanObject, DoubleObject, ErrorObject, NullObject, Object, ObjectTrait, ReturnObject,
     },
     parser::ast::{
-        BlockStatement, Expression, IfExpression, InfixExpression, PrefixExpression, Program,
-        Statement,
+        BlockStatement, Expression, IfExpression, InfixExpression, LetStatement, PrefixExpression,
+        Program, Statement,
     },
     token::{Operator, Value},
 };
@@ -13,10 +14,10 @@ fn is_error_object(obj: &Object) -> bool {
     matches!(obj, Object::Error(_))
 }
 
-pub fn eval(node: &Program) -> Option<Object> {
+pub fn eval(node: &Program, env: &mut Environment) -> Option<Object> {
     let mut result = None;
     for stmt in &node.statements {
-        result = eval_statement(stmt);
+        result = eval_statement(stmt, env);
         match result {
             Some(Object::RetrunValue(return_object)) => {
                 return Some(*return_object.value);
@@ -30,10 +31,10 @@ pub fn eval(node: &Program) -> Option<Object> {
     result
 }
 
-fn eval_block_statement(block_stmt: &BlockStatement) -> Option<Object> {
+fn eval_block_statement(block_stmt: &BlockStatement, env: &mut Environment) -> Option<Object> {
     let mut result = None;
     for stmt in &block_stmt.statements {
-        result = eval_statement(stmt);
+        result = eval_statement(stmt, env);
         match result {
             Some(Object::RetrunValue(_)) => return result,
             Some(Object::Error(_)) => return result,
@@ -43,47 +44,58 @@ fn eval_block_statement(block_stmt: &BlockStatement) -> Option<Object> {
     result
 }
 
-fn eval_statement(stmt: &Statement) -> Option<Object> {
+fn eval_statement(stmt: &Statement, env: &mut Environment) -> Option<Object> {
     match stmt {
-        // Statement::Let(let_statement) => None,
+        Statement::Let(let_statement) => eval_let_statement(let_statement, env),
         Statement::Return(return_statement) => {
-            let obj = eval_expression(&return_statement.return_val)?;
+            let obj = eval_expression(&return_statement.return_val, env)?;
             if is_error_object(&obj) {
                 return Some(obj);
             }
             Some(Object::RetrunValue(ReturnObject::new(obj)))
         }
         Statement::Expression(expression_statement) => {
-            eval_expression(&expression_statement.expression)
+            eval_expression(&expression_statement.expression, env)
         }
-        Statement::BlockStatement(block_statement) => eval_block_statement(block_statement),
-        _ => None,
+        Statement::BlockStatement(block_statement) => eval_block_statement(block_statement, env),
+        // _ => None,
     }
 }
 
-fn eval_expression(expr: &Expression) -> Option<Object> {
+fn eval_expression(expr: &Expression, env: &mut Environment) -> Option<Object> {
     match expr {
-        // Expression::Identifier(identifier) => None,
+        Expression::Identifier(identifier) => {
+            let obj = env.get(&identifier.value);
+            match obj {
+                Some(_) => obj,
+                None => Some(Object::Error(ErrorObject::new(format!(
+                    "identifier not found: {}",
+                    identifier.value
+                )))),
+            }
+        }
         Expression::DoubleLiteral(double_literal) => Some(Object::Double(DoubleObject {
             value: double_literal.val,
         })),
         Expression::PrefixExpression(prefix_expression) => {
-            eval_prefix_expression(prefix_expression)
+            eval_prefix_expression(prefix_expression, env)
         }
-        Expression::InfixExpression(infix_expression) => eval_infix_expression(infix_expression),
+        Expression::InfixExpression(infix_expression) => {
+            eval_infix_expression(infix_expression, env)
+        }
         Expression::Boolean(boolean) => Some(Object::Boolean(BooleanObject::get(
             boolean.value == Value::True,
         ))),
-        Expression::IfExpression(if_expression) => eval_if_expression(if_expression),
+        Expression::IfExpression(if_expression) => eval_if_expression(if_expression, env),
         // Expression::FunctionLiteral(function_literal) => None,
         // Expression::CallExpression(call_expression) => None,
         _ => None,
     }
 }
 
-fn eval_prefix_expression(prefix_expr: &PrefixExpression) -> Option<Object> {
+fn eval_prefix_expression(prefix_expr: &PrefixExpression, env: &mut Environment) -> Option<Object> {
     let (op, right) = (&prefix_expr.op, &prefix_expr.right);
-    let val = eval_expression(right)?;
+    let val = eval_expression(right, env)?;
     if is_error_object(&val) {
         return Some(val);
     }
@@ -122,13 +134,13 @@ fn eval_exclamation_operator(val: &Object) -> Option<Object> {
     }
 }
 
-fn eval_infix_expression(infix_expr: &InfixExpression) -> Option<Object> {
+fn eval_infix_expression(infix_expr: &InfixExpression, env: &mut Environment) -> Option<Object> {
     let (left_expr, op, right_expr) = (&infix_expr.left, &infix_expr.op, &infix_expr.right);
-    let left = eval_expression(left_expr)?;
+    let left = eval_expression(left_expr, env)?;
     if is_error_object(&left) {
         return Some(left);
     }
-    let right = eval_expression(right_expr)?;
+    let right = eval_expression(right_expr, env)?;
     if is_error_object(&right) {
         return Some(right);
     }
@@ -198,14 +210,14 @@ fn eval_infix_expression(infix_expr: &InfixExpression) -> Option<Object> {
     }
 }
 
-fn eval_if_expression(if_expr: &IfExpression) -> Option<Object> {
+fn eval_if_expression(if_expr: &IfExpression, env: &mut Environment) -> Option<Object> {
     let IfExpression {
         condition,
         consequence,
         alternative,
     } = if_expr;
 
-    let obj = eval_expression(condition)?;
+    let obj = eval_expression(condition, env)?;
     if is_error_object(&obj) {
         return Some(obj);
     }
@@ -216,10 +228,19 @@ fn eval_if_expression(if_expr: &IfExpression) -> Option<Object> {
     };
 
     if flag {
-        eval_block_statement(consequence)
+        eval_block_statement(consequence, env)
     } else if let Some(alt) = alternative {
-        eval_block_statement(alt)
+        eval_block_statement(alt, env)
     } else {
         Some(Object::Null(NullObject::get()))
     }
+}
+
+fn eval_let_statement(ls: &LetStatement, env: &mut Environment) -> Option<Object> {
+    let obj = eval_expression(&ls.value, env)?;
+    if is_error_object(&obj) {
+        return Some(obj);
+    }
+    env.set(ls.name.value.clone(), obj.clone());
+    Some(obj)
 }

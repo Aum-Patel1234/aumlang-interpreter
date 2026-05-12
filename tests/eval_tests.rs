@@ -1,4 +1,5 @@
 use aumlang::{
+    environment::Environment,
     eval::evaluate::eval,
     lexer::Lexer,
     object::obj::{BOOLEAN_OBJ, DOUBLE_OBJ, Object, ObjectTrait},
@@ -10,7 +11,8 @@ fn test_eval(input: &str) -> Object {
     let mut p = Parser::new(l);
     let program = p.parse_program();
     assert!(p.check_parse_errors());
-    match eval(&program) {
+    let mut env = Environment::default();
+    match eval(&program, &mut env) {
         Some(e) => e,
         None => panic!("Expected Box<dyn Object> got None"),
     }
@@ -185,6 +187,7 @@ fn test_error_handling() {
             "#,
             "unknown operator: BOOLEAN + BOOLEAN",
         ),
+        ("foobar", "identifier not found: foobar"),
     ];
 
     for (s, err) in tests {
@@ -197,5 +200,18 @@ fn test_error_handling() {
         if e.msg != err {
             panic!("Wrong error message, expected - {}, got - {}", err, e.msg)
         }
+    }
+}
+
+#[test]
+fn test_let_statements() {
+    let tests = [
+        ("let a = 5; a; 5;", 5),
+        ("let a = 5*5;a;", 25),
+        ("let a = 5; let b = a;b;", 5),
+        ("let a = 5; let b = a; let c = a+b+5; c;", 15),
+    ];
+    for (s, v) in tests {
+        test_double_object(test_eval(s), v as f64);
     }
 }

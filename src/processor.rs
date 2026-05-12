@@ -1,8 +1,9 @@
 use crate::{
-    eval::evaluate::eval, lexer::Lexer, object::obj::ObjectTrait, parser::parser_logic::Parser,
+    environment::Environment, eval::evaluate::eval, lexer::Lexer, object::obj::ObjectTrait,
+    parser::parser_logic::Parser,
 };
 
-pub fn process_input(input: &str) {
+pub fn process_input(input: &str, env: &mut Environment) {
     let lexer = Lexer::new_lexer(input);
     // let mut tokens: Vec<Token> = Vec::new();
     // loop {
@@ -22,7 +23,7 @@ pub fn process_input(input: &str) {
     //     println!("{:?}", stmt.string());
     // }
     // println!("{}", program);
-    let evaluated = eval(&program);
+    let evaluated = eval(&program, env);
     if let Some(e) = evaluated {
         println!("{}", e.inspect());
     }
