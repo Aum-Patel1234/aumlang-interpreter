@@ -1,5 +1,7 @@
 use crate::{
-    object::obj::{BooleanObject, DoubleObject, NullObject, Object, ReturnObject},
+    object::obj::{
+        BooleanObject, DoubleObject, ErrorObject, NullObject, Object, ObjectTrait, ReturnObject,
+    },
     parser::ast::{
         BlockStatement, Expression, IfExpression, InfixExpression, PrefixExpression, Program,
         Statement,
@@ -7,12 +9,35 @@ use crate::{
     token::{Operator, Value},
 };
 
+fn is_error_object(obj: &Object) -> bool {
+    matches!(obj, Object::Error(_))
+}
+
 pub fn eval(node: &Program) -> Option<Object> {
     let mut result = None;
     for stmt in &node.statements {
         result = eval_statement(stmt);
-        if let Some(Object::RetrunValue(val)) = result {
-            return Some(*val.value);
+        match result {
+            Some(Object::RetrunValue(return_object)) => {
+                return Some(*return_object.value);
+            }
+            Some(Object::Error(_)) => {
+                return result;
+            }
+            _ => {}
+        }
+    }
+    result
+}
+
+fn eval_block_statement(block_stmt: &BlockStatement) -> Option<Object> {
+    let mut result = None;
+    for stmt in &block_stmt.statements {
+        result = eval_statement(stmt);
+        match result {
+            Some(Object::RetrunValue(_)) => return result,
+            Some(Object::Error(_)) => return result,
+            _ => {}
         }
     }
     result
@@ -23,6 +48,9 @@ fn eval_statement(stmt: &Statement) -> Option<Object> {
         // Statement::Let(let_statement) => None,
         Statement::Return(return_statement) => {
             let obj = eval_expression(&return_statement.return_val)?;
+            if is_error_object(&obj) {
+                return Some(obj);
+            }
             Some(Object::RetrunValue(ReturnObject::new(obj)))
         }
         Statement::Expression(expression_statement) => {
@@ -56,11 +84,18 @@ fn eval_expression(expr: &Expression) -> Option<Object> {
 fn eval_prefix_expression(prefix_expr: &PrefixExpression) -> Option<Object> {
     let (op, right) = (&prefix_expr.op, &prefix_expr.right);
     let val = eval_expression(right)?;
+    if is_error_object(&val) {
+        return Some(val);
+    }
 
     match op {
         Operator::Minus => eval_minus_prefix_expression(&val),
         Operator::Exclamation => eval_exclamation_operator(&val),
-        _ => None,
+        o => Some(Object::Error(ErrorObject::new(format!(
+            "unknown operator: {}{}",
+            o,
+            val.object_type()
+        )))),
     }
 }
 
@@ -69,7 +104,10 @@ fn eval_minus_prefix_expression(val: &Object) -> Option<Object> {
         Object::Double(double_object) => Some(Object::Double(DoubleObject {
             value: -double_object.value,
         })),
-        _ => None,
+        o => Some(Object::Error(ErrorObject::new(format!(
+            "unknown operator: -{}",
+            o.object_type(),
+        )))),
     }
 }
 
@@ -87,13 +125,17 @@ fn eval_exclamation_operator(val: &Object) -> Option<Object> {
 fn eval_infix_expression(infix_expr: &InfixExpression) -> Option<Object> {
     let (left_expr, op, right_expr) = (&infix_expr.left, &infix_expr.op, &infix_expr.right);
     let left = eval_expression(left_expr)?;
+    if is_error_object(&left) {
+        return Some(left);
+    }
     let right = eval_expression(right_expr)?;
+    if is_error_object(&right) {
+        return Some(right);
+    }
 
     match (&left, &right) {
-        (Object::Double(_), Object::Double(_)) => {
-            let l = get_double_value_or_none(left)?;
-            let r = get_double_value_or_none(right)?;
-
+        (Object::Double(lo), Object::Double(ro)) => {
+            let (l, r) = (lo.value, ro.value);
             let obj = match op {
                 Operator::Plus => Object::Double(DoubleObject { value: l + r }),
                 Operator::Minus => Object::Double(DoubleObject { value: l - r }),
@@ -107,7 +149,14 @@ fn eval_infix_expression(infix_expr: &InfixExpression) -> Option<Object> {
                 Operator::GTE => Object::Boolean(BooleanObject::get(l >= r)),
                 Operator::LTE => Object::Boolean(BooleanObject::get(l <= r)),
 
-                _ => return None,
+                _ => {
+                    return Some(Object::Error(ErrorObject::new(format!(
+                        "unknown operator: {} {} {}",
+                        lo.object_type(),
+                        op,
+                        ro.object_type()
+                    ))));
+                }
             };
 
             Some(obj)
@@ -115,47 +164,40 @@ fn eval_infix_expression(infix_expr: &InfixExpression) -> Option<Object> {
 
         // NOTE: here i could have assigned 1.0->true and 0.0->false and treated like double
         // but i choose not to. then it would have behaved like node/python interpreter
-        (Object::Boolean(_), Object::Boolean(_)) => {
-            let l = get_boolean_or_none(left)?;
-            let r = get_boolean_or_none(right)?;
+        (Object::Boolean(l), Object::Boolean(r)) => match op {
+            Operator::EQ => Some(Object::Boolean(BooleanObject::get(l == r))),
+            Operator::NEQ => Some(Object::Boolean(BooleanObject::get(l != r))),
+            _ => Some(Object::Error(ErrorObject::new(format!(
+                "unknown operator: {} {} {}",
+                l.object_type(),
+                op,
+                r.object_type()
+            )))),
+        },
 
-            match op {
-                Operator::EQ => Some(Object::Boolean(BooleanObject::get(l == r))),
-                Operator::NEQ => Some(Object::Boolean(BooleanObject::get(l != r))),
-                _ => None,
-            }
-        }
+        // _ => None,
+        (l, r) => {
+            let err_msg = if l.object_type() != r.object_type() {
+                format!(
+                    "type mismatch: {} {} {}",
+                    l.object_type(),
+                    op,
+                    r.object_type()
+                )
+            } else {
+                format!(
+                    "unknown operator: {} {} {}",
+                    l.object_type(),
+                    op,
+                    r.object_type()
+                )
+            };
 
-        _ => None,
-    }
-}
-
-#[inline]
-fn get_double_value_or_none(obj: Object) -> Option<f64> {
-    match obj {
-        Object::Double(double_object) => Some(double_object.value),
-        _ => None,
-    }
-}
-
-#[inline]
-fn get_boolean_or_none(obj: Object) -> Option<&'static BooleanObject> {
-    match obj {
-        Object::Boolean(bo) => Some(bo),
-        _ => None,
-    }
-}
-
-fn eval_block_statement(block_stmt: &BlockStatement) -> Option<Object> {
-    let mut result = None;
-    for stmt in &block_stmt.statements {
-        result = eval_statement(stmt);
-        if let Some(Object::RetrunValue(_)) = &result {
-            return result;
+            Some(Object::Error(ErrorObject::new(err_msg)))
         }
     }
-    result
 }
+
 fn eval_if_expression(if_expr: &IfExpression) -> Option<Object> {
     let IfExpression {
         condition,
@@ -164,6 +206,9 @@ fn eval_if_expression(if_expr: &IfExpression) -> Option<Object> {
     } = if_expr;
 
     let obj = eval_expression(condition)?;
+    if is_error_object(&obj) {
+        return Some(obj);
+    }
     let flag = match obj {
         Object::Boolean(boolean_object) => boolean_object.value,
         Object::Double(double_object) => double_object.value != 0.0,

@@ -161,3 +161,41 @@ fn test_return_statements() {
         assert!(test_double_object(evaluated, v))
     }
 }
+
+#[test]
+fn test_error_handling() {
+    let tests = [
+        ("5 + true;", "type mismatch: DOUBLE + BOOLEAN"),
+        ("5 + true; 5;", "type mismatch: DOUBLE + BOOLEAN"),
+        ("-true", "unknown operator: -BOOLEAN"),
+        ("true + false;", "unknown operator: BOOLEAN + BOOLEAN"),
+        ("5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"),
+        (
+            "if (10 > 1) { true + false; }",
+            "unknown operator: BOOLEAN + BOOLEAN",
+        ),
+        (
+            r#"
+            if (10 > 1) {
+                if (10 > 1) {
+                    return true + false;
+                }
+                return 1;
+            }
+            "#,
+            "unknown operator: BOOLEAN + BOOLEAN",
+        ),
+    ];
+
+    for (s, err) in tests {
+        println!("{}", s);
+        let evaluated = test_eval(s);
+        let e = match evaluated {
+            Object::Error(error) => error,
+            o => panic!("No error Object returned, got {}", o),
+        };
+        if e.msg != err {
+            panic!("Wrong error message, expected - {}, got - {}", err, e.msg)
+        }
+    }
+}

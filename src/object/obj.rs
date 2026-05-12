@@ -6,6 +6,7 @@ pub const DOUBLE_OBJ: &str = "DOUBLE";
 pub const BOOLEAN_OBJ: &str = "BOOLEAN";
 pub const NULL_OBJ: &str = "NULL";
 pub const RETURN_VALUE_OBJ: &str = "RETURN_VALUE";
+pub const ERROR_OBJ: &str = "ERROR";
 pub const TRUE: BooleanObject = BooleanObject { value: true };
 pub const FALSE: BooleanObject = BooleanObject { value: false };
 pub const NULL: NullObject = NullObject {};
@@ -19,6 +20,7 @@ pub enum Object {
     Boolean(&'static BooleanObject),
     Null(&'static NullObject),
     RetrunValue(ReturnObject),
+    Error(ErrorObject),
 }
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -27,6 +29,7 @@ impl Display for Object {
             Object::Boolean(boolean_object) => boolean_object.inspect(),
             Object::Null(null_object) => null_object.inspect(),
             Object::RetrunValue(return_object) => return_object.inspect(),
+            Object::Error(error) => error.inspect(),
         };
         write!(f, "{}", s)
     }
@@ -38,6 +41,7 @@ impl ObjectTrait for Object {
             Object::Boolean(boolean_object) => boolean_object.object_type(),
             Object::Null(null_object) => null_object.object_type(),
             Object::RetrunValue(return_object) => return_object.object_type(),
+            Object::Error(error) => error.object_type(),
         }
     }
 
@@ -47,6 +51,7 @@ impl ObjectTrait for Object {
             Object::Boolean(boolean_object) => boolean_object.inspect(),
             Object::Null(null_object) => null_object.inspect(),
             Object::RetrunValue(return_object) => return_object.inspect(),
+            Object::Error(error) => error.inspect(),
         }
     }
 }
@@ -127,5 +132,27 @@ impl ObjectTrait for ReturnObject {
 
     fn inspect(&self) -> String {
         self.value.inspect()
+    }
+}
+
+// error
+// NOTE: In a production-ready interpreter we’d want to attach a stack trace to such error
+// objects, add the line and column numbers of its origin and provide more than just a message.
+// Line and column numbers are attached to the tokens by the lexer
+pub struct ErrorObject {
+    pub msg: String,
+}
+impl ErrorObject {
+    pub fn new(msg: String) -> Self {
+        Self { msg }
+    }
+}
+impl ObjectTrait for ErrorObject {
+    fn object_type(&self) -> ObjectType {
+        ERROR_OBJ.to_string()
+    }
+
+    fn inspect(&self) -> String {
+        format!("ERROR: {}", self.msg)
     }
 }
