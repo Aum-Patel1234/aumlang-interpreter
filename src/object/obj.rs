@@ -1,5 +1,13 @@
 use std::fmt::Display;
 
+use crate::{
+    environment::Environment,
+    parser::{
+        Node,
+        ast::{BlockStatement, Identifier},
+    },
+};
+
 pub type ObjectType = String;
 
 pub const DOUBLE_OBJ: &str = "DOUBLE";
@@ -7,6 +15,7 @@ pub const BOOLEAN_OBJ: &str = "BOOLEAN";
 pub const NULL_OBJ: &str = "NULL";
 pub const RETURN_VALUE_OBJ: &str = "RETURN_VALUE";
 pub const ERROR_OBJ: &str = "ERROR";
+pub const FUNCTION_OBJ: &str = "FUNCTION";
 pub const TRUE: BooleanObject = BooleanObject { value: true };
 pub const FALSE: BooleanObject = BooleanObject { value: false };
 pub const NULL: NullObject = NullObject {};
@@ -23,6 +32,7 @@ pub enum Object {
     Null(&'static NullObject),
     RetrunValue(ReturnObject),
     Error(ErrorObject),
+    Function(FunctionObject),
 }
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -32,6 +42,7 @@ impl Display for Object {
             Object::Null(null_object) => null_object.inspect(),
             Object::RetrunValue(return_object) => return_object.inspect(),
             Object::Error(error) => error.inspect(),
+            Object::Function(function_object) => function_object.inspect(),
         };
         write!(f, "{}", s)
     }
@@ -44,6 +55,7 @@ impl ObjectTrait for Object {
             Object::Null(null_object) => null_object.object_type(),
             Object::RetrunValue(return_object) => return_object.object_type(),
             Object::Error(error) => error.object_type(),
+            Object::Function(function_object) => function_object.object_type(),
         }
     }
 
@@ -54,6 +66,7 @@ impl ObjectTrait for Object {
             Object::Null(null_object) => null_object.inspect(),
             Object::RetrunValue(return_object) => return_object.inspect(),
             Object::Error(error) => error.inspect(),
+            Object::Function(function_object) => function_object.inspect(),
         }
     }
 }
@@ -159,5 +172,40 @@ impl ObjectTrait for ErrorObject {
 
     fn inspect(&self) -> String {
         format!("ERROR: {}", self.msg)
+    }
+}
+
+// function obj
+#[derive(Clone)]
+pub struct FunctionObject {
+    pub args: Vec<Identifier>,
+    pub body: BlockStatement,
+    pub env: Environment,
+}
+impl FunctionObject {
+    pub fn new(args: Vec<Identifier>, body: BlockStatement, env: Environment) -> Self {
+        FunctionObject { args, body, env }
+    }
+}
+impl ObjectTrait for FunctionObject {
+    fn object_type(&self) -> ObjectType {
+        FUNCTION_OBJ.to_string()
+    }
+
+    fn inspect(&self) -> String {
+        let mut out = String::new();
+        out.push_str("fn(");
+        out.push_str(
+            &self
+                .args
+                .iter()
+                .map(|i| i.value.as_str())
+                .collect::<Vec<_>>()
+                .join(", "),
+        );
+        out.push_str(") {\n");
+        out.push_str(&self.body.string());
+        out.push_str("\n}");
+        out
     }
 }

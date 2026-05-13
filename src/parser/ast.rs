@@ -8,7 +8,7 @@ pub trait Node {
     fn string(&self) -> String;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Let(LetStatement),
     Return(ReturnStatement),
@@ -36,7 +36,7 @@ impl Node for Statement {
 }
 
 // NOTE: i have ignored expressionNode() in the book
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     Identifier(Identifier),
     DoubleLiteral(DoubleLiteral),
@@ -104,7 +104,7 @@ impl Node for Identifier {
 }
 
 // DoubleLiteral
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DoubleLiteral {
     pub token: Token,
     pub val: f64,
@@ -129,7 +129,7 @@ impl Node for DoubleLiteral {
 }
 
 // Boolean
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Boolean {
     pub value: Value,
 }
@@ -158,7 +158,7 @@ impl Node for Boolean {
 }
 
 // If Expression
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IfExpression {
     pub condition: Box<Expression>,
     pub consequence: BlockStatement,
@@ -196,7 +196,7 @@ impl Node for IfExpression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FunctionLiteral {
     // token: Token,
     // QUESTION: Weather it being Vec<Expression> would be good ?
@@ -239,7 +239,7 @@ impl Node for FunctionLiteral {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CallExpression {
     pub function: Box<Expression>,
     pub args: Vec<Expression>,
@@ -275,7 +275,7 @@ impl Node for CallExpression {
 }
 
 // PrefixExpression
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PrefixExpression {
     // pub token: Token,
     pub op: Operator,
@@ -304,7 +304,7 @@ impl Node for PrefixExpression {
 }
 
 // Infix Expression
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InfixExpression {
     pub left: Box<Expression>,
     pub op: Operator,
@@ -378,7 +378,7 @@ impl Display for Program {
 }
 
 // LetStatement
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LetStatement {
     pub keyword: Keyword,
     pub name: Identifier,
@@ -414,7 +414,7 @@ impl Node for LetStatement {
 }
 
 // ReturnStatement
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ReturnStatement {
     pub keyword: Keyword,
     pub return_val: Expression,
@@ -457,7 +457,7 @@ impl Node for ReturnStatement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExpressionStatement {
     pub token: Token,
     pub expression: Expression,
@@ -486,7 +486,7 @@ impl Node for ExpressionStatement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BlockStatement {
     pub statements: Vec<Statement>,
 }

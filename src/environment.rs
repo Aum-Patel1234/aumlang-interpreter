@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, hash_map};
 
 use crate::object::obj::Object;
 
@@ -9,7 +9,7 @@ use crate::object::obj::Object;
 //         }
 //     }
 // }
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Environment {
     store: HashMap<String, Object>,
 }
@@ -23,5 +23,8 @@ impl Environment {
     }
     pub fn get_ref(&mut self, key: &str) -> Option<&Object> {
         self.store.get(key)
+    }
+    pub fn iter(&self) -> hash_map::Iter<'_, String, Object> {
+        self.store.iter()
     }
 }

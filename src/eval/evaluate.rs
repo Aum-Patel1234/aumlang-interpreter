@@ -1,7 +1,8 @@
 use crate::{
     environment::Environment,
     object::obj::{
-        BooleanObject, DoubleObject, ErrorObject, NullObject, Object, ObjectTrait, ReturnObject,
+        BooleanObject, DoubleObject, ErrorObject, FunctionObject, NullObject, Object, ObjectTrait,
+        ReturnObject,
     },
     parser::ast::{
         BlockStatement, Expression, IfExpression, InfixExpression, LetStatement, PrefixExpression,
@@ -87,10 +88,36 @@ fn eval_expression(expr: &Expression, env: &mut Environment) -> Option<Object> {
             boolean.value == Value::True,
         ))),
         Expression::IfExpression(if_expression) => eval_if_expression(if_expression, env),
-        // Expression::FunctionLiteral(function_literal) => None,
-        // Expression::CallExpression(call_expression) => None,
-        _ => None,
+        Expression::FunctionLiteral(function_literal) => {
+            Some(Object::Function(FunctionObject::new(
+                function_literal.args.clone(),
+                function_literal.body.clone(),
+                Environment::default(),
+            )))
+        }
+        Expression::CallExpression(call_expression) => {
+            let fn_obj = eval_expression(&call_expression.function, env)?;
+            if is_error_object(&fn_obj) {
+                return Some(fn_obj);
+            }
+            let args = eval_expressions(&call_expression.args, env)?;
+            if args.len() == 1 && is_error_object(&args[0]) {
+                return Some(args[0].clone());
+            }
+            Some(fn_obj)
+        }
     }
+}
+fn eval_expressions(exprs: &Vec<Expression>, env: &mut Environment) -> Option<Vec<Object>> {
+    let mut objs: Vec<Object> = Vec::new();
+    for expr in exprs {
+        let obj = eval_expression(expr, env)?;
+        if is_error_object(&obj) {
+            return Some(vec![obj]);
+        }
+        objs.push(obj);
+    }
+    Some(objs)
 }
 
 fn eval_prefix_expression(prefix_expr: &PrefixExpression, env: &mut Environment) -> Option<Object> {

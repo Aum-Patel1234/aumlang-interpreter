@@ -52,4 +52,7 @@ fn run_file(args: &[String]) {
         Ok(content) => process_input(&content, &mut env),
         Err(e) => eprintln!("Failed to read file: {}", e),
     }
+    for (k, v) in env.iter() {
+        println!("key = {}, val = {}", k, v);
+    }
 }
