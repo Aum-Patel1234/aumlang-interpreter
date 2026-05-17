@@ -1,6 +1,8 @@
 use std::{
+    cell::RefCell,
     env, fs,
     io::{self, Write},
+    rc::Rc,
 };
 
 use aumlang::{environment::Environment, processor::process_input};
@@ -17,10 +19,10 @@ fn main() {
 
 fn run_cli() {
     let mut input = String::new();
-    let mut env = Environment::default();
+    let env = Rc::new(RefCell::new(Environment::default()));
 
     loop {
-        print!("aum > ");
+        print!("\x1b[32maum > \x1b[0m");
         io::stdout().flush().unwrap();
 
         input.clear();
@@ -35,24 +37,28 @@ fn run_cli() {
                 }
                 // println!("{}", trimmed_line);
 
-                process_input(trimmed_line, &mut env);
+                process_input(trimmed_line, env.clone());
             }
             Err(e) => {
                 eprintln!("Error reading the input: {}", e);
             }
         }
     }
+
+    for (k, v) in env.borrow().iter() {
+        println!("key = {}, val = {}", k, v);
+    }
 }
 
 fn run_file(args: &[String]) {
     let file_path = &args[1];
-    let mut env = Environment::default();
+    let env = Rc::new(RefCell::new(Environment::default()));
 
     match fs::read_to_string(file_path) {
-        Ok(content) => process_input(&content, &mut env),
+        Ok(content) => process_input(&content, env.clone()),
         Err(e) => eprintln!("Failed to read file: {}", e),
     }
-    for (k, v) in env.iter() {
+    for (k, v) in env.borrow().iter() {
         println!("key = {}, val = {}", k, v);
     }
 }

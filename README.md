@@ -1,5 +1,11 @@
 # AumLang Interpreter
 
+<p align="center">
+  <img src="assets/basic.png" width="700"/>
+  <br/>
+  <img src="assets/higher_order_fn.png" width="700"/>
+</p>
+
 **AumLang Interpreter** is a small, interpreter in **C**. (Or so as i thought at first)
 
 - I rewrote it in Rust cause in C i was just constantly thinking about memory, raw dogging \0 at

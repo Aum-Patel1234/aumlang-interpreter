@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     environment::Environment,
     object::obj::{
@@ -15,10 +17,10 @@ fn is_error_object(obj: &Object) -> bool {
     matches!(obj, Object::Error(_))
 }
 
-pub fn eval(node: &Program, env: &mut Environment) -> Option<Object> {
+pub fn eval(node: &Program, env: Rc<RefCell<Environment>>) -> Option<Object> {
     let mut result = None;
     for stmt in &node.statements {
-        result = eval_statement(stmt, env);
+        result = eval_statement(stmt, env.clone());
         match result {
             Some(Object::RetrunValue(return_object)) => {
                 return Some(*return_object.value);
@@ -32,10 +34,13 @@ pub fn eval(node: &Program, env: &mut Environment) -> Option<Object> {
     result
 }
 
-fn eval_block_statement(block_stmt: &BlockStatement, env: &mut Environment) -> Option<Object> {
+fn eval_block_statement(
+    block_stmt: &BlockStatement,
+    env: Rc<RefCell<Environment>>,
+) -> Option<Object> {
     let mut result = None;
     for stmt in &block_stmt.statements {
-        result = eval_statement(stmt, env);
+        result = eval_statement(stmt, env.clone());
         match result {
             Some(Object::RetrunValue(_)) => return result,
             Some(Object::Error(_)) => return result,
@@ -45,7 +50,7 @@ fn eval_block_statement(block_stmt: &BlockStatement, env: &mut Environment) -> O
     result
 }
 
-fn eval_statement(stmt: &Statement, env: &mut Environment) -> Option<Object> {
+fn eval_statement(stmt: &Statement, env: Rc<RefCell<Environment>>) -> Option<Object> {
     match stmt {
         Statement::Let(let_statement) => eval_let_statement(let_statement, env),
         Statement::Return(return_statement) => {
@@ -59,14 +64,13 @@ fn eval_statement(stmt: &Statement, env: &mut Environment) -> Option<Object> {
             eval_expression(&expression_statement.expression, env)
         }
         Statement::BlockStatement(block_statement) => eval_block_statement(block_statement, env),
-        // _ => None,
     }
 }
 
-fn eval_expression(expr: &Expression, env: &mut Environment) -> Option<Object> {
+fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<Object> {
     match expr {
         Expression::Identifier(identifier) => {
-            let obj = env.get(&identifier.value);
+            let obj = env.borrow().get(&identifier.value);
             match obj {
                 Some(_) => obj,
                 None => Some(Object::Error(ErrorObject::new(format!(
@@ -79,39 +83,78 @@ fn eval_expression(expr: &Expression, env: &mut Environment) -> Option<Object> {
             value: double_literal.val,
         })),
         Expression::PrefixExpression(prefix_expression) => {
-            eval_prefix_expression(prefix_expression, env)
+            eval_prefix_expression(prefix_expression, env.clone())
         }
         Expression::InfixExpression(infix_expression) => {
-            eval_infix_expression(infix_expression, env)
+            eval_infix_expression(infix_expression, env.clone())
         }
         Expression::Boolean(boolean) => Some(Object::Boolean(BooleanObject::get(
             boolean.value == Value::True,
         ))),
-        Expression::IfExpression(if_expression) => eval_if_expression(if_expression, env),
+        Expression::IfExpression(if_expression) => eval_if_expression(if_expression, env.clone()),
         Expression::FunctionLiteral(function_literal) => {
             Some(Object::Function(FunctionObject::new(
                 function_literal.args.clone(),
                 function_literal.body.clone(),
-                Environment::default(),
+                env.clone(),
             )))
         }
         Expression::CallExpression(call_expression) => {
-            let fn_obj = eval_expression(&call_expression.function, env)?;
+            let fn_obj = eval_expression(&call_expression.function, env.clone())?;
             if is_error_object(&fn_obj) {
                 return Some(fn_obj);
             }
-            let args = eval_expressions(&call_expression.args, env)?;
+            let mut args = eval_expressions(&call_expression.args, env.clone())?;
             if args.len() == 1 && is_error_object(&args[0]) {
-                return Some(args[0].clone());
+                let err_obj = args.pop()?;
+                return Some(err_obj);
             }
-            Some(fn_obj)
+            let fo = match fn_obj {
+                Object::Function(function_object) => function_object,
+                _ => return None,
+            };
+            apply_function(fo, args)
         }
     }
 }
-fn eval_expressions(exprs: &Vec<Expression>, env: &mut Environment) -> Option<Vec<Object>> {
+fn apply_function(func: FunctionObject, args: Vec<Object>) -> Option<Object> {
+    // initialize env inside func
+    let env = Rc::new(RefCell::new(Environment::default()));
+    // IMPORTANT: as we set the outer to be the func env above it so that we can
+    // continue looking upward if there is any variable with the known variable_name value
+    env.borrow_mut().set_outer(func.env);
+    for (idx, ident) in func.args.iter().enumerate() {
+        env.borrow_mut()
+            .set(ident.value.to_string(), args[idx].clone());
+    }
+
+    // eval
+    match eval_block_statement(&func.body, env)? {
+        Object::RetrunValue(return_object) => Some(*return_object.value),
+        o => {
+            // match &o {
+            //     Object::Function(fo) => {
+            //         println!("here");
+            //         let vals: Vec<String> = fo
+            //             .env
+            //             .borrow()
+            //             .iter()
+            //             .map(|(k, v)| format!("{}: {}", k, v.inspect()))
+            //             .collect();
+            //
+            //         println!("{:?} {}", vals, fo.inspect());
+            //     }
+            //     _ => {}
+            // }
+            Some(o)
+        }
+    }
+}
+
+fn eval_expressions(exprs: &Vec<Expression>, env: Rc<RefCell<Environment>>) -> Option<Vec<Object>> {
     let mut objs: Vec<Object> = Vec::new();
     for expr in exprs {
-        let obj = eval_expression(expr, env)?;
+        let obj = eval_expression(expr, env.clone())?;
         if is_error_object(&obj) {
             return Some(vec![obj]);
         }
@@ -120,7 +163,10 @@ fn eval_expressions(exprs: &Vec<Expression>, env: &mut Environment) -> Option<Ve
     Some(objs)
 }
 
-fn eval_prefix_expression(prefix_expr: &PrefixExpression, env: &mut Environment) -> Option<Object> {
+fn eval_prefix_expression(
+    prefix_expr: &PrefixExpression,
+    env: Rc<RefCell<Environment>>,
+) -> Option<Object> {
     let (op, right) = (&prefix_expr.op, &prefix_expr.right);
     let val = eval_expression(right, env)?;
     if is_error_object(&val) {
@@ -161,13 +207,16 @@ fn eval_exclamation_operator(val: &Object) -> Option<Object> {
     }
 }
 
-fn eval_infix_expression(infix_expr: &InfixExpression, env: &mut Environment) -> Option<Object> {
+fn eval_infix_expression(
+    infix_expr: &InfixExpression,
+    env: Rc<RefCell<Environment>>,
+) -> Option<Object> {
     let (left_expr, op, right_expr) = (&infix_expr.left, &infix_expr.op, &infix_expr.right);
-    let left = eval_expression(left_expr, env)?;
+    let left = eval_expression(left_expr, env.clone())?;
     if is_error_object(&left) {
         return Some(left);
     }
-    let right = eval_expression(right_expr, env)?;
+    let right = eval_expression(right_expr, env.clone())?;
     if is_error_object(&right) {
         return Some(right);
     }
@@ -237,14 +286,14 @@ fn eval_infix_expression(infix_expr: &InfixExpression, env: &mut Environment) ->
     }
 }
 
-fn eval_if_expression(if_expr: &IfExpression, env: &mut Environment) -> Option<Object> {
+fn eval_if_expression(if_expr: &IfExpression, env: Rc<RefCell<Environment>>) -> Option<Object> {
     let IfExpression {
         condition,
         consequence,
         alternative,
     } = if_expr;
 
-    let obj = eval_expression(condition, env)?;
+    let obj = eval_expression(condition, env.clone())?;
     if is_error_object(&obj) {
         return Some(obj);
     }
@@ -255,19 +304,19 @@ fn eval_if_expression(if_expr: &IfExpression, env: &mut Environment) -> Option<O
     };
 
     if flag {
-        eval_block_statement(consequence, env)
+        eval_block_statement(consequence, env.clone())
     } else if let Some(alt) = alternative {
-        eval_block_statement(alt, env)
+        eval_block_statement(alt, env.clone())
     } else {
         Some(Object::Null(NullObject::get()))
     }
 }
 
-fn eval_let_statement(ls: &LetStatement, env: &mut Environment) -> Option<Object> {
-    let obj = eval_expression(&ls.value, env)?;
+fn eval_let_statement(ls: &LetStatement, env: Rc<RefCell<Environment>>) -> Option<Object> {
+    let obj = eval_expression(&ls.value, env.clone())?;
     if is_error_object(&obj) {
         return Some(obj);
     }
-    env.set(ls.name.value.clone(), obj.clone());
+    env.borrow_mut().set(ls.name.value.clone(), obj.clone());
     Some(obj)
 }

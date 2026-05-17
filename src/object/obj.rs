@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 use crate::{
     environment::Environment,
@@ -180,10 +180,10 @@ impl ObjectTrait for ErrorObject {
 pub struct FunctionObject {
     pub args: Vec<Identifier>,
     pub body: BlockStatement,
-    pub env: Environment,
+    pub env: Rc<RefCell<Environment>>,
 }
 impl FunctionObject {
-    pub fn new(args: Vec<Identifier>, body: BlockStatement, env: Environment) -> Self {
+    pub fn new(args: Vec<Identifier>, body: BlockStatement, env: Rc<RefCell<Environment>>) -> Self {
         FunctionObject { args, body, env }
     }
 }

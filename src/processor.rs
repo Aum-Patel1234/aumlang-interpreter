@@ -1,9 +1,14 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
-    environment::Environment, eval::evaluate::eval, lexer::Lexer, object::obj::ObjectTrait,
+    environment::Environment,
+    eval::evaluate::eval,
+    lexer::Lexer,
+    object::obj::{Object, ObjectTrait},
     parser::parser_logic::Parser,
 };
 
-pub fn process_input(input: &str, env: &mut Environment) {
+pub fn process_input(input: &str, env: Rc<RefCell<Environment>>) {
     let lexer = Lexer::new_lexer(input);
     // let mut tokens: Vec<Token> = Vec::new();
     // loop {
@@ -25,7 +30,15 @@ pub fn process_input(input: &str, env: &mut Environment) {
     // println!("{}", program);
     let evaluated = eval(&program, env);
     if let Some(e) = evaluated {
-        println!("{}", e.inspect());
+        match e {
+            Object::Error(error_object) => {
+                println!("\x1b[31mERROR: {}\x1b[0m", error_object.msg);
+            }
+            Object::Function(_) => {}
+            _ => {
+                println!("{}", e.inspect());
+            }
+        }
     }
 
     // print_tokens(&tokens);

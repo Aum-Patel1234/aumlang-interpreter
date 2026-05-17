@@ -1,4 +1,5 @@
 use core::panic;
+use std::{cell::RefCell, rc::Rc};
 
 use aumlang::{
     environment::Environment,
@@ -13,8 +14,8 @@ fn test_eval(input: &str) -> Object {
     let mut p = Parser::new(l);
     let program = p.parse_program();
     assert!(p.check_parse_errors());
-    let mut env = Environment::default();
-    match eval(&program, &mut env) {
+    let env = Rc::new(RefCell::new(Environment::default()));
+    match eval(&program, env) {
         Some(e) => e,
         None => panic!("Expected Box<dyn Object> got None"),
     }
@@ -231,17 +232,29 @@ fn test_function_object() {
     assert_eq!(fo.body.string(), "(x + Value::Double(2))");
 }
 
-// #[test]
-// fn test_function_application() {
-//     let tests = [
-//         ("let identity = fn(x) { x; }; identity(5);", 5),
-//         ("let identity = fn(x) { return x; }; identity(5);", 5),
-//         ("let double = fn(x) { x * 2; }; double(5);", 10),
-//         ("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
-//         ("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
-//         ("fn(x) { x; }(5)", 5),
-//     ];
-//     for (s, v) in tests {
-//         test_double_object(test_eval(s), v as f64);
-//     }
-// }
+#[test]
+fn test_function_application() {
+    let tests = [
+        ("let identity = fn(x) { x; }; identity(5);", 5),
+        ("let identity = fn(x) { return x; }; identity(5);", 5),
+        ("let double = fn(x) { x * 2; }; double(5);", 10),
+        ("let add = fn(x, y) { x + y; }; add(5, 5);", 10),
+        ("let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20),
+        ("fn(x) { x; }(5)", 5),
+    ];
+    for (s, v) in tests {
+        test_double_object(test_eval(s), v as f64);
+    }
+}
+
+#[test]
+fn test_closures() {
+    let input = r#"
+    let newAdder = fn(x) {
+        fn(y) { x + y };
+    };
+    let addTwo = newAdder(2);
+    addTwo(2);
+    "#;
+    test_double_object(test_eval(input), 4.0);
+}

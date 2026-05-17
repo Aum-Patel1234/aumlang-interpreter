@@ -17,6 +17,7 @@ let add = fn(a, b){
 };
 
 let z = a+b;
+let y = add(1,4);
 # b = 10 + 11 * 5 + 1;
 # print(b9);
 let c = true;
@@ -25,6 +26,7 @@ if(a > 10){
 }else{
   b;
 }
+y
 # func newFunc(a) {
 #   getRefCount a
 #   return a+1
