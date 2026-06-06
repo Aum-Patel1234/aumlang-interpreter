@@ -1,3 +1,4 @@
+pub mod cli;
 pub mod consts;
 pub mod environment;
 pub mod eval;

@@ -11,6 +11,7 @@ let a = 9;
 a;
 
 let b = 9 + 1;
+# let c = "asfds";
 b;
 let add = fn(a, b){
   return a+b;

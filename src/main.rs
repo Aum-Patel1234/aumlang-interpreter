@@ -5,7 +5,18 @@ use std::{
     rc::Rc,
 };
 
-use aumlang::{environment::Environment, processor::process_input};
+use aumlang::{
+    cli::input_events::{
+        key_event_add_char, key_event_backspace, key_event_down, key_event_enter, key_event_paste,
+        key_event_up,
+    },
+    environment::Environment,
+    processor::process_input,
+};
+use crossterm::{
+    event::{Event, KeyCode, KeyEventKind, KeyModifiers, read},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -20,31 +31,38 @@ fn main() {
 fn run_cli() {
     let mut input = String::new();
     let env = Rc::new(RefCell::new(Environment::default()));
+    // this gets every event of the key raw
+    enable_raw_mode().unwrap();
 
+    print!("\r\x1b[2K\x1b[32maum > \x1b[0m");
+    io::stdout().flush().unwrap();
     loop {
-        print!("\x1b[32maum > \x1b[0m");
-        io::stdout().flush().unwrap();
-
-        input.clear();
-
-        match io::stdin().read_line(&mut input) {
-            Ok(0) => break,
-            Ok(_) => {
-                let trimmed_line = input.trim();
-
-                if trimmed_line.eq("exit") {
+        match read().unwrap() {
+            Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
+                KeyCode::Up => key_event_up(&mut input),
+                KeyCode::Down => key_event_down(&mut input),
+                KeyCode::Enter if !key_event_enter(&mut input, env.clone()) => {
                     break;
                 }
-                // println!("{}", trimmed_line);
-
-                process_input(trimmed_line, env.clone());
-            }
-            Err(e) => {
-                eprintln!("Error reading the input: {}", e);
-            }
+                KeyCode::Backspace => key_event_backspace(&mut input),
+                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    break;
+                }
+                KeyCode::Char('v') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    key_event_paste(&mut input)
+                }
+                KeyCode::Char(c) => key_event_add_char(&mut input, c),
+                // KeyCode::Tab => {
+                //     // TODO: autocomplete
+                // }
+                _ => {}
+            },
+            _ => {}
         }
     }
 
+    disable_raw_mode().unwrap();
+    println!();
     for (k, v) in env.borrow().iter() {
         println!("key = {}, val = {}", k, v);
     }
