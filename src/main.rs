@@ -1,17 +1,16 @@
-use std::{
-    cell::RefCell,
-    env, fs,
-    io::{self, Write},
-    rc::Rc,
-};
+use std::{cell::RefCell, env, fs, rc::Rc};
 
 use aumlang::{
-    cli::input_events::{
-        key_event_add_char, key_event_backspace, key_event_down, key_event_enter, key_event_paste,
-        key_event_up,
+    cli::{
+        cli_history::ReplHistory,
+        input_events::{
+            key_event_add_char, key_event_backspace, key_event_down, key_event_enter,
+            key_event_paste, key_event_up,
+        },
     },
     environment::Environment,
     processor::process_input,
+    utils::redraw_prompt,
 };
 use crossterm::{
     event::{Event, KeyCode, KeyEventKind, KeyModifiers, read},
@@ -30,18 +29,18 @@ fn main() {
 
 fn run_cli() {
     let mut input = String::new();
+    let mut history = ReplHistory::default();
     let env = Rc::new(RefCell::new(Environment::default()));
     // this gets every event of the key raw
     enable_raw_mode().unwrap();
+    redraw_prompt(&input);
 
-    print!("\r\x1b[2K\x1b[32maum > \x1b[0m");
-    io::stdout().flush().unwrap();
     loop {
         match read().unwrap() {
             Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                KeyCode::Up => key_event_up(&mut input),
-                KeyCode::Down => key_event_down(&mut input),
-                KeyCode::Enter if !key_event_enter(&mut input, env.clone()) => {
+                KeyCode::Up => key_event_up(&mut input, &mut history),
+                KeyCode::Down => key_event_down(&mut input, &mut history),
+                KeyCode::Enter if !key_event_enter(&mut input, &mut history, env.clone()) => {
                     break;
                 }
                 KeyCode::Backspace => key_event_backspace(&mut input),

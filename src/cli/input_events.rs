@@ -7,27 +7,34 @@ use std::{
 use arboard::Clipboard;
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
-use crate::{environment::Environment, processor::process_input, utils::print_error};
+use crate::{
+    cli::cli_history::ReplHistory,
+    environment::Environment,
+    processor::process_input,
+    utils::{print_error, redraw_prompt},
+};
 
-pub fn key_event_up(input: &mut String) {
-    // TODO: history previous
-    input.clear();
-    input.push_str("up");
-
-    print!("\r\x1b[2K\x1b[32maum > \x1b[0m{}", input);
-    io::stdout().flush().unwrap();
+pub fn key_event_up(input: &mut String, history: &mut ReplHistory) {
+    if let Some(s) = history.back() {
+        input.clear();
+        input.push_str(s);
+        redraw_prompt(input);
+    }
 }
 
-pub fn key_event_down(input: &mut String) {
-    // TODO: history next
-    input.clear();
-    input.push_str("down");
-
-    print!("\r\x1b[2K\x1b[32maum > \x1b[0m{}", input);
-    io::stdout().flush().unwrap();
+pub fn key_event_down(input: &mut String, history: &mut ReplHistory) {
+    if let Some(s) = history.next() {
+        input.clear();
+        input.push_str(s);
+        redraw_prompt(input);
+    }
 }
 
-pub fn key_event_enter(input: &mut String, env: Rc<RefCell<Environment>>) -> bool {
+pub fn key_event_enter(
+    input: &mut String,
+    history: &mut ReplHistory,
+    env: Rc<RefCell<Environment>>,
+) -> bool {
     let line = input.trim().to_string();
 
     print!("\r\n");
@@ -42,18 +49,15 @@ pub fn key_event_enter(input: &mut String, env: Rc<RefCell<Environment>>) -> boo
     enable_raw_mode().unwrap();
 
     input.clear();
-
-    print!("\r\x1b[2K\x1b[32maum > \x1b[0m");
-    io::stdout().flush().unwrap();
+    redraw_prompt(input);
+    history.push_command(line);
     true
 }
 
 pub fn key_event_backspace(input: &mut String) {
     if !input.is_empty() {
         input.pop();
-
-        print!("\r\x1b[2K\x1b[32maum > \x1b[0m{}", input);
-        io::stdout().flush().unwrap();
+        redraw_prompt(input);
     }
 }
 
