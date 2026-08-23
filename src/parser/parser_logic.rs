@@ -6,7 +6,7 @@ use crate::{
         ast::{
             BlockStatement, Boolean, CallExpression, DoubleLiteral, Expression,
             ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression,
-            LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
+            LetStatement, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -52,7 +52,7 @@ impl<'a> Parser<'a> {
 
         // prefix_parse_fns
         p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
-        p.register_prefix(TokenKind::Value, Parser::parse_double_literal);
+        p.register_prefix(TokenKind::Double, Parser::parse_double_literal);
         p.register_prefix(
             TokenKind::Operator(Operator::Exclamation),
             Parser::parse_prefix_expression,
@@ -69,6 +69,7 @@ impl<'a> Parser<'a> {
             TokenKind::Keyword(Keyword::FUNCTION),
             Parser::parse_function_literal,
         );
+        p.register_prefix(TokenKind::StringLiteral, Parser::parse_string_literal);
 
         // infix_parse_fns
         p.register_infix(
@@ -199,6 +200,17 @@ impl<'a> Parser<'a> {
             }
         }
     }
+    fn parse_string_literal(&mut self) -> Option<Expression> {
+        let string_literal = StringLiteral::new(self.curr_token.clone());
+        match string_literal {
+            Ok(sl) => Some(Expression::StringLiteral(sl)),
+            Err(e) => {
+                self.errors.push(e);
+                None
+            }
+        }
+    }
+
     fn parse_double_literal(&mut self) -> Option<Expression> {
         let double_literal = DoubleLiteral::new(self.curr_token.clone());
         match double_literal {

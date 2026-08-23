@@ -105,7 +105,11 @@ pub enum TokenKind {
     // Identifiers (no data needed here)
     // Literals (no data here; actual value stays in Token)
     Identifier,
-    Value,
+    Double,
+    StringLiteral,
+    True,
+    False,
+    Null,
 
     LParen,
     RParen,
@@ -220,8 +224,12 @@ impl Token {
             Token::Semicolon => TokenKind::Semicolon,
             Token::Comma => TokenKind::Comma,
             Token::EOF => TokenKind::EOF,
-            Token::Value(_) => TokenKind::Value,
             Token::Unknown => TokenKind::Unknown,
+            Token::Value(Value::Double(_)) => TokenKind::Double,
+            Token::Value(Value::StringLiteral(_)) => TokenKind::StringLiteral,
+            Token::Value(Value::True) => TokenKind::True,
+            Token::Value(Value::False) => TokenKind::False,
+            Token::Value(Value::Null) => TokenKind::Null,
         }
     }
 }

@@ -4,7 +4,7 @@ use crate::{
     environment::Environment,
     object::obj::{
         BooleanObject, DoubleObject, ErrorObject, FunctionObject, NullObject, Object, ObjectTrait,
-        ReturnObject,
+        ReturnObject, StringObject,
     },
     parser::ast::{
         BlockStatement, Expression, IfExpression, InfixExpression, LetStatement, PrefixExpression,
@@ -81,6 +81,9 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
         }
         Expression::DoubleLiteral(double_literal) => Some(Object::Double(DoubleObject {
             value: double_literal.val,
+        })),
+        Expression::StringLiteral(string_literal) => Some(Object::StringObj(StringObject {
+            value: string_literal.val.clone(),
         })),
         Expression::PrefixExpression(prefix_expression) => {
             eval_prefix_expression(prefix_expression, env.clone())

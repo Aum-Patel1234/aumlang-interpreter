@@ -11,6 +11,7 @@ use crate::{
 pub type ObjectType = String;
 
 pub const DOUBLE_OBJ: &str = "DOUBLE";
+pub const STRING_OBJ: &str = "STRING";
 pub const BOOLEAN_OBJ: &str = "BOOLEAN";
 pub const NULL_OBJ: &str = "NULL";
 pub const RETURN_VALUE_OBJ: &str = "RETURN_VALUE";
@@ -28,6 +29,7 @@ pub trait ObjectTrait {
 #[derive(Clone)]
 pub enum Object {
     Double(DoubleObject),
+    StringObj(StringObject),
     Boolean(&'static BooleanObject),
     Null(&'static NullObject),
     RetrunValue(ReturnObject),
@@ -43,6 +45,7 @@ impl Display for Object {
             Object::RetrunValue(return_object) => return_object.inspect(),
             Object::Error(error) => error.inspect(),
             Object::Function(function_object) => function_object.inspect(),
+            Object::StringObj(string_object) => string_object.inspect(),
         };
         write!(f, "{}", s)
     }
@@ -56,6 +59,7 @@ impl ObjectTrait for Object {
             Object::RetrunValue(return_object) => return_object.object_type(),
             Object::Error(error) => error.object_type(),
             Object::Function(function_object) => function_object.object_type(),
+            Object::StringObj(string_object) => string_object.object_type(),
         }
     }
 
@@ -67,6 +71,7 @@ impl ObjectTrait for Object {
             Object::RetrunValue(return_object) => return_object.inspect(),
             Object::Error(error) => error.inspect(),
             Object::Function(function_object) => function_object.inspect(),
+            Object::StringObj(string_object) => string_object.inspect(),
         }
     }
 }
@@ -80,6 +85,22 @@ pub struct DoubleObject {
 impl ObjectTrait for DoubleObject {
     fn object_type(&self) -> ObjectType {
         DOUBLE_OBJ.to_string()
+    }
+
+    fn inspect(&self) -> String {
+        self.value.to_string()
+    }
+}
+
+// strings
+#[derive(Clone)]
+pub struct StringObject {
+    pub value: String,
+}
+
+impl ObjectTrait for StringObject {
+    fn object_type(&self) -> ObjectType {
+        STRING_OBJ.to_string()
     }
 
     fn inspect(&self) -> String {

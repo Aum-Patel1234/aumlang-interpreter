@@ -148,6 +148,8 @@ return false;
 }
 10 == 10;
 10 != 9;
+"foobar"
+"foo bar"
 "#;
 
     let tests = vec![
@@ -233,6 +235,8 @@ return false;
         Token::Operator(Operator::NEQ),
         Token::Value(Value::Double(9.0)),
         Token::Semicolon,
+        Token::Value(Value::StringLiteral("foobar".to_string())),
+        Token::Value(Value::StringLiteral("foo bar".to_string())),
         Token::EOF,
     ];
 

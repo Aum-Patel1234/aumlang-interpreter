@@ -226,6 +226,31 @@ fn test_double_literal_expression() {
 }
 
 #[test]
+fn test_string_literal_expression() {
+    let input = "\"hello world\"";
+    let l = Lexer::new_lexer(input);
+    let mut parser = Parser::new(l);
+    let program = parser.parse_program();
+
+    assert_eq!(
+        program.statements.len(),
+        1,
+        "program.statements does not contain 1 stmt"
+    );
+    let stmt = &program.statements[0];
+
+    match &stmt {
+        Statement::Expression(expression_statement) => match &expression_statement.expression {
+            Expression::StringLiteral(string_literal) => {
+                assert_eq!(string_literal.val, "hello world");
+            }
+            _ => panic!("expression is not a string literal"),
+        },
+        _ => panic!("stmt is not a expression"),
+    };
+}
+
+#[test]
 fn test_parsing_prefix_expressions() {
     let tests = [("!5", "!", 5.0), ("-15", "-", 15.0)];
 

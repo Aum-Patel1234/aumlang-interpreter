@@ -32,6 +32,16 @@ fn test_double_object(obj: Object, expected: f64) -> bool {
     assert_eq!(double_obj.value, expected);
     true
 }
+#[test]
+fn test_string_object() {
+    let input = "\"Hello World!\"";
+    let eveal = test_eval(input);
+    match eveal {
+        Object::StringObj(string_object) => assert_eq!(string_object.value, "Hello World!"),
+        _ => panic!("Object is not a StringObj"),
+    }
+}
+
 fn test_boolean_object(obj: Object, expected: bool) -> bool {
     assert_eq!(obj.object_type(), BOOLEAN_OBJ);
 

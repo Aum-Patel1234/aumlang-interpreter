@@ -40,6 +40,7 @@ impl Node for Statement {
 pub enum Expression {
     Identifier(Identifier),
     DoubleLiteral(DoubleLiteral),
+    StringLiteral(StringLiteral),
     PrefixExpression(PrefixExpression),
     InfixExpression(InfixExpression),
     Boolean(Boolean),
@@ -58,6 +59,7 @@ impl Node for Expression {
             Expression::IfExpression(if_expression) => if_expression.token_literal(),
             Expression::FunctionLiteral(function_literal) => function_literal.token_literal(),
             Expression::CallExpression(call_expression) => call_expression.token_literal(),
+            Expression::StringLiteral(string_literal) => string_literal.token_literal(),
         }
     }
 
@@ -71,6 +73,7 @@ impl Node for Expression {
             Expression::IfExpression(if_expression) => if_expression.string(),
             Expression::FunctionLiteral(function_literal) => function_literal.string(),
             Expression::CallExpression(call_expression) => call_expression.string(),
+            Expression::StringLiteral(string_literal) => string_literal.string(),
         }
     }
 }
@@ -119,6 +122,34 @@ impl DoubleLiteral {
     }
 }
 impl Node for DoubleLiteral {
+    fn token_literal(&self) -> String {
+        self.token.to_string()
+    }
+
+    fn string(&self) -> String {
+        self.token.to_string()
+    }
+}
+
+// StringLiteral
+#[derive(Debug, Clone)]
+pub struct StringLiteral {
+    pub token: Token,
+    pub val: String,
+}
+impl StringLiteral {
+    pub fn new(token: Token) -> Result<StringLiteral, String> {
+        if let Token::Value(Value::StringLiteral(ref s)) = token {
+            Ok(StringLiteral {
+                val: s.to_string(),
+                token,
+            })
+        } else {
+            Err(format!("Expected string literal, got {:?}", token))
+        }
+    }
+}
+impl Node for StringLiteral {
     fn token_literal(&self) -> String {
         self.token.to_string()
     }
@@ -450,6 +481,7 @@ impl Node for ReturnStatement {
                 out.push_str(&function_literal.string())
             }
             Expression::CallExpression(call_expression) => out.push_str(&call_expression.string()),
+            Expression::StringLiteral(string_literal) => out.push_str(&string_literal.string()),
         }
         out.push(';');
 
@@ -482,6 +514,7 @@ impl Node for ExpressionStatement {
             Expression::IfExpression(if_expression) => if_expression.string(),
             Expression::FunctionLiteral(function_literal) => function_literal.string(),
             Expression::CallExpression(call_expression) => call_expression.string(),
+            Expression::StringLiteral(string_literal) => string_literal.string(),
         }
     }
 }

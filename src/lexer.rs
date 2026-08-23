@@ -55,6 +55,16 @@ impl<'a> Lexer<'a> {
             }
         }
     }
+    fn read_string(&mut self) -> Option<&str> {
+        let pos = self.position + 1;
+        loop {
+            self.read_char();
+            if self.ch == '"' || self.ch == '\0' {
+                break;
+            }
+        }
+        self.input.get(pos..self.position)
+    }
 
     pub fn next_token(&mut self) -> Token {
         self.skip_extras();
@@ -111,7 +121,10 @@ impl<'a> Lexer<'a> {
             ',' => Token::Comma,
             ';' => Token::Semicolon,
 
-            '"' => Token::Operator(Operator::DoubleQuote),
+            '"' => match self.read_string() {
+                Some(s) => Token::Value(Value::StringLiteral(s.to_string())),
+                None => Token::Value(Value::Null),
+            },
 
             '\0' => Token::EOF,
             _ => {
