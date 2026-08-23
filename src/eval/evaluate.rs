@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     environment::Environment,
+    eval::builtins::BUILTINS,
     object::obj::{
         BooleanObject, DoubleObject, ErrorObject, FunctionObject, NullObject, Object, ObjectTrait,
         ReturnObject, StringObject,
@@ -73,10 +74,18 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
             let obj = env.borrow().get(&identifier.value);
             match obj {
                 Some(_) => obj,
-                None => Some(Object::Error(ErrorObject::new(format!(
-                    "identifier not found: {}",
-                    identifier.value
-                )))),
+                None => {
+                    for (s, builtin) in BUILTINS {
+                        if *s == identifier.value {
+                            return Some(Object::Builtin(builtin));
+                        }
+                    }
+
+                    Some(Object::Error(ErrorObject::new(format!(
+                        "identifier not found: {}",
+                        identifier.value
+                    ))))
+                }
             }
         }
         Expression::DoubleLiteral(double_literal) => Some(Object::Double(DoubleObject {
@@ -112,11 +121,11 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
                 let err_obj = args.pop()?;
                 return Some(err_obj);
             }
-            let fo = match fn_obj {
-                Object::Function(function_object) => function_object,
-                _ => return None,
-            };
-            apply_function(fo, args)
+            match fn_obj {
+                Object::Function(function_object) => apply_function(function_object, args),
+                Object::Builtin(builtin) => Some((builtin.func)(&args)),
+                _ => None,
+            }
         }
     }
 }
@@ -258,6 +267,49 @@ fn eval_infix_expression(
         (Object::Boolean(l), Object::Boolean(r)) => match op {
             Operator::EQ => Some(Object::Boolean(BooleanObject::get(l == r))),
             Operator::NEQ => Some(Object::Boolean(BooleanObject::get(l != r))),
+            _ => Some(Object::Error(ErrorObject::new(format!(
+                "unknown operator: {} {} {}",
+                l.object_type(),
+                op,
+                r.object_type()
+            )))),
+        },
+
+        (Object::StringObj(l), Object::StringObj(r)) => match op {
+            Operator::Plus => Some(Object::StringObj(StringObject {
+                value: format!("{}{}", l.value, r.value),
+            })),
+            Operator::EQ => Some(Object::Boolean(BooleanObject::get(l.value == r.value))),
+            Operator::NEQ => Some(Object::Boolean(BooleanObject::get(l.value != r.value))),
+
+            _ => Some(Object::Error(ErrorObject::new(format!(
+                "unknown operator: {} {} {}",
+                l.object_type(),
+                op,
+                r.object_type()
+            )))),
+        },
+        (Object::StringObj(l), Object::Double(r)) => match op {
+            Operator::Plus => Some(Object::StringObj(StringObject {
+                value: format!("{}{}", l.value, r.value),
+            })),
+            Operator::Star => Some(Object::StringObj(StringObject {
+                value: l.value.repeat(r.value as usize),
+            })),
+
+            _ => Some(Object::Error(ErrorObject::new(format!(
+                "unknown operator: {} {} {}",
+                l.object_type(),
+                op,
+                r.object_type()
+            )))),
+        },
+
+        (Object::Double(l), Object::StringObj(r)) => match op {
+            Operator::Plus => Some(Object::StringObj(StringObject {
+                value: format!("{}{}", l.value, r.value),
+            })),
+
             _ => Some(Object::Error(ErrorObject::new(format!(
                 "unknown operator: {} {} {}",
                 l.object_type(),

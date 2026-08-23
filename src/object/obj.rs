@@ -17,6 +17,7 @@ pub const NULL_OBJ: &str = "NULL";
 pub const RETURN_VALUE_OBJ: &str = "RETURN_VALUE";
 pub const ERROR_OBJ: &str = "ERROR";
 pub const FUNCTION_OBJ: &str = "FUNCTION";
+pub const BUILTIN_OBJ: &str = "BUILTIN";
 pub const TRUE: BooleanObject = BooleanObject { value: true };
 pub const FALSE: BooleanObject = BooleanObject { value: false };
 pub const NULL: NullObject = NullObject {};
@@ -35,6 +36,7 @@ pub enum Object {
     RetrunValue(ReturnObject),
     Error(ErrorObject),
     Function(FunctionObject),
+    Builtin(&'static Builtin),
 }
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -46,6 +48,7 @@ impl Display for Object {
             Object::Error(error) => error.inspect(),
             Object::Function(function_object) => function_object.inspect(),
             Object::StringObj(string_object) => string_object.inspect(),
+            Object::Builtin(builtin) => builtin.inspect(),
         };
         write!(f, "{}", s)
     }
@@ -60,6 +63,7 @@ impl ObjectTrait for Object {
             Object::Error(error) => error.object_type(),
             Object::Function(function_object) => function_object.object_type(),
             Object::StringObj(string_object) => string_object.object_type(),
+            Object::Builtin(builtin) => builtin.object_type(),
         }
     }
 
@@ -72,6 +76,7 @@ impl ObjectTrait for Object {
             Object::Error(error) => error.inspect(),
             Object::Function(function_object) => function_object.inspect(),
             Object::StringObj(string_object) => string_object.inspect(),
+            Object::Builtin(builtin) => builtin.inspect(),
         }
     }
 }
@@ -228,5 +233,21 @@ impl ObjectTrait for FunctionObject {
         out.push_str(&self.body.string());
         out.push_str("\n}");
         out
+    }
+}
+
+pub type BuiltinFunction = fn(args: &[Object]) -> Object;
+
+#[derive(Clone)]
+pub struct Builtin {
+    pub func: BuiltinFunction,
+}
+impl ObjectTrait for Builtin {
+    fn object_type(&self) -> ObjectType {
+        FUNCTION_OBJ.to_string()
+    }
+
+    fn inspect(&self) -> String {
+        "builtin function".to_string()
     }
 }

@@ -41,6 +41,17 @@ fn test_string_object() {
         _ => panic!("Object is not a StringObj"),
     }
 }
+#[test]
+fn test_string_concatenation() {
+    let input = "\"Hello World!\" + \" new str\" + 9";
+    let eveal = test_eval(input);
+    match eveal {
+        Object::StringObj(string_object) => {
+            assert_eq!(string_object.value, "Hello World! new str9")
+        }
+        _ => panic!("Object is not a StringObj"),
+    }
+}
 
 fn test_boolean_object(obj: Object, expected: bool) -> bool {
     assert_eq!(obj.object_type(), BOOLEAN_OBJ);
@@ -102,6 +113,8 @@ fn test_eval_boolean_expression() {
         ("(1 < 2) == false", false),
         ("(1 > 2) == true", false),
         ("(1 > 2) == false", true),
+        ("\"a\" == \"a\"", true),
+        ("\"ab\" != \"a\"", true),
     ];
 
     for (s, v) in tests {
@@ -189,6 +202,7 @@ fn test_error_handling() {
             "if (10 > 1) { true + false; }",
             "unknown operator: BOOLEAN + BOOLEAN",
         ),
+        ("\"Hello\" - \"World\"", "unknown operator: STRING - STRING"),
         (
             r#"
             if (10 > 1) {
@@ -267,4 +281,40 @@ fn test_closures() {
     addTwo(2);
     "#;
     test_double_object(test_eval(input), 4.0);
+}
+
+#[test]
+fn test_builtin_functions() {
+    enum Expected {
+        Double(f64),
+        Error(&'static str),
+    }
+    let tests = [
+        ("len(\"\")", Expected::Double(0f64)),
+        ("len(\"four\")", Expected::Double(4f64)),
+        ("len(\"hello world\")", Expected::Double(11f64)),
+        ("len(1)", Expected::Error("Expected string got DOUBLE")),
+        (
+            "len(\"one\", \"two\")",
+            Expected::Error("Expected one string argument in builtin len() func got 2 args"),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let evaluated = test_eval(input);
+        match expected {
+            Expected::Double(v) => {
+                assert!(test_double_object(evaluated, v), "expected {}", v);
+            }
+            Expected::Error(expected_error) => match evaluated {
+                Object::Error(error_object) => {
+                    assert_eq!(error_object.msg, expected_error);
+                }
+
+                object => {
+                    panic!("Expected error object, got {}", object);
+                }
+            },
+        }
+    }
 }
