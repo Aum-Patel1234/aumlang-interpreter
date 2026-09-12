@@ -33,7 +33,7 @@ fn test_double_object(obj: Object, expected: f64) -> bool {
     true
 }
 #[test]
-fn test_string_object() {
+fn test_string_object_hello_world() {
     let input = "\"Hello World!\"";
     let eveal = test_eval(input);
     match eveal {
@@ -306,6 +306,67 @@ fn test_builtin_functions() {
             Expected::Double(v) => {
                 assert!(test_double_object(evaluated, v), "expected {}", v);
             }
+            Expected::Error(expected_error) => match evaluated {
+                Object::Error(error_object) => {
+                    assert_eq!(error_object.msg, expected_error);
+                }
+
+                object => {
+                    panic!("Expected error object, got {}", object);
+                }
+            },
+        }
+    }
+}
+#[inline]
+fn test_string_object(object: Object, expected: &str) -> bool {
+    match object {
+        Object::StringObj(string_object) => string_object.value == expected,
+        _ => false,
+    }
+}
+#[test]
+fn test_builtin_string_case_functions() {
+    enum Expected {
+        String(&'static str),
+        Error(&'static str),
+    }
+
+    let tests = [
+        // lower()
+        ("lower(\"\")", Expected::String("")),
+        ("lower(\"HELLO\")", Expected::String("hello")),
+        ("lower(\"Hello World\")", Expected::String("hello world")),
+        ("lower(\"Rust123!\")", Expected::String("rust123!")),
+        ("lower(1)", Expected::Error("Expected string got DOUBLE")),
+        (
+            "lower(\"one\", \"two\")",
+            Expected::Error("Expected one string argument in builtin lower() func got 2 args"),
+        ),
+        // upper()
+        ("upper(\"\")", Expected::String("")),
+        ("upper(\"hello\")", Expected::String("HELLO")),
+        ("upper(\"Hello World\")", Expected::String("HELLO WORLD")),
+        ("upper(\"Rust123!\")", Expected::String("RUST123!")),
+        ("upper(1)", Expected::Error("Expected string got DOUBLE")),
+        (
+            "upper(\"one\", \"two\")",
+            Expected::Error("Expected one string argument in builtin upper() func got 2 args"),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let evaluated = test_eval(input);
+
+        match expected {
+            Expected::String(expected_value) => {
+                assert!(
+                    test_string_object(evaluated, expected_value),
+                    "expected {}",
+                    expected_value
+                );
+            }
+
             Expected::Error(expected_error) => match evaluated {
                 Object::Error(error_object) => {
                     assert_eq!(error_object.msg, expected_error);

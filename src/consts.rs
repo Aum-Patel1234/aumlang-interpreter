@@ -14,6 +14,11 @@ pub const RETURN_KEYWORD: &str = "return";
 pub const TRUE_KEYWORD: &str = "true";
 pub const FALSE_KEYWORD: &str = "false";
 
+pub const LEN_FN_NAME: &str = "len";
+pub const TYPE_FN_NAME: &str = "type";
+pub const LOWER_FN_NAME: &str = "lower";
+pub const UPPER_FN_NAME: &str = "upper";
+
 pub fn look_keyword(identifier: &str) -> Option<Keyword> {
     match identifier {
         LET_KEYWORD => Some(Keyword::LET),
