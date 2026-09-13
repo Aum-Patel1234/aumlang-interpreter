@@ -3,7 +3,6 @@ use core::panic;
 use aumlang::{
     lexer::Lexer,
     parser::{
-        // Node,
         Node,
         ast::{Expression, Statement},
         parser_logic::Parser,
@@ -778,5 +777,53 @@ fn test_let_statements() {
                 test_literal_expression(val, tt.expected_value.clone());
             }
         }
+    }
+}
+#[test]
+fn parse_assignment_expression() {
+    let input = r#"
+        let a = 5;
+        a = 9;
+    "#;
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+    assert_eq!(
+        program.statements.len(),
+        2,
+        "program.statements does not contain 2 statement"
+    );
+
+    let stmt = &program.statements[0];
+    test_let_statement(stmt, "a");
+    let val = match stmt {
+        Statement::Let(ls) => &ls.value,
+        _ => panic!("stmt is not LetStatement"),
+    };
+    let expected_value = Value::Double(5f64);
+    match expected_value {
+        Value::StringLiteral(s) => {
+            test_identifier(val, &s);
+        }
+        _ => {
+            test_literal_expression(val, expected_value.clone());
+        }
+    }
+
+    let stmt2 = &program.statements[1];
+    let expression_statement = match stmt2 {
+        Statement::Expression(expression_statement) => expression_statement,
+        _ => panic!("stmt2 is not an expression_statement"),
+    };
+    let assignment_expression = match &expression_statement.expression {
+        Expression::AssignmentExpression(assignment_expression) => assignment_expression,
+        _ => panic!("stmt2 do not have assignment_expression"),
+    };
+
+    assert_eq!(assignment_expression.variable.value, "a");
+    match &*assignment_expression.expr {
+        Expression::DoubleLiteral(double_literal) => assert_eq!(double_literal.val, 9f64),
+        _ => panic!("expected double_literal with value 9"),
     }
 }

@@ -4,9 +4,10 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            BlockStatement, Boolean, CallExpression, DoubleLiteral, Expression,
-            ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression,
-            LetStatement, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral,
+            AssignmentExpression, BlockStatement, Boolean, CallExpression, DoubleLiteral,
+            Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression,
+            InfixExpression, LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
+            StringLiteral,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -51,6 +52,7 @@ impl<'a> Parser<'a> {
         p.next_token();
 
         // prefix_parse_fns
+        // p.register_prefix(TokenKind::Operator(Operator::Equal), Parser::parse_equal);
         p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
         p.register_prefix(TokenKind::Double, Parser::parse_double_literal);
         p.register_prefix(
@@ -72,6 +74,10 @@ impl<'a> Parser<'a> {
         p.register_prefix(TokenKind::StringLiteral, Parser::parse_string_literal);
 
         // infix_parse_fns
+        // p.register_infix(
+        //     TokenKind::Operator(Operator::Equal),
+        //     Parser::parse_infix_expression,
+        // );
         p.register_infix(
             TokenKind::Operator(Operator::Plus),
             Parser::parse_infix_expression,
@@ -192,12 +198,36 @@ impl<'a> Parser<'a> {
     // parse funcs
     fn parse_identifier(&mut self) -> Option<Expression> {
         let identifier = Identifier::new(self.curr_token.clone());
-        match identifier {
-            Ok(ident) => Some(Expression::Identifier(ident)),
-            Err(e) => {
-                self.errors.push(e);
-                None
+        if self.peek_token != (Token::Operator(Operator::Equal)) {
+            match identifier {
+                Ok(ident) => Some(Expression::Identifier(ident)),
+                Err(e) => {
+                    self.errors.push(e);
+                    None
+                }
             }
+        } else {
+            let variable = match identifier {
+                Ok(ident) => ident,
+                Err(e) => {
+                    self.errors.push(e);
+                    return None;
+                }
+            };
+            self.next_token(); // skip ident
+            // println!("hree 1= {}", variable.value);
+            self.next_token(); // skip =
+            let expr = self.parse_expression(OperatorPrecedence::Lowest);
+            // println!("{:?}", expr);
+            // NOTE: i am allowing things like (a = (b=10)) if i uncomment below that will be blocked
+            // self.skip_to_semicolon();
+            // if self.curr_token != Token::EOF && self.peek_token == Token::Semicolon {
+            //     self.next_token(); // consume ;
+            // }
+
+            expr.map(|expr| {
+                Expression::AssignmentExpression(AssignmentExpression::new(variable, expr))
+            })
         }
     }
     fn parse_string_literal(&mut self) -> Option<Expression> {
@@ -482,7 +512,7 @@ impl<'a> Parser<'a> {
 
         let expression = self.parse_expression(OperatorPrecedence::Lowest);
         self.skip_to_semicolon();
-        if self.peek_token == Token::Semicolon {
+        if self.curr_token != Token::EOF && self.peek_token == Token::Semicolon {
             self.next_token(); // consume ;
         }
 

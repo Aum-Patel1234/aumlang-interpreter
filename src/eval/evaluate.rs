@@ -127,6 +127,27 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
                 _ => None,
             }
         }
+        Expression::AssignmentExpression(assignment_expression) => {
+            let identifier = &assignment_expression.variable;
+            let name = identifier.value.as_str();
+            // check if variable aldready exists else return Error
+            match env.borrow().get(name) {
+                Some(_) => {}
+                None => {
+                    return Some(Object::Error(ErrorObject::new(format!(
+                        "identifier not found: {}",
+                        identifier.value
+                    ))));
+                }
+            };
+
+            let value = eval_expression(&assignment_expression.expr, env.clone())?;
+            if let Object::Error(_) = &value {
+                return Some(value);
+            }
+            env.borrow_mut().set(name.to_string(), value.clone());
+            Some(value)
+        }
     }
 }
 fn apply_function(func: FunctionObject, args: Vec<Object>) -> Option<Object> {

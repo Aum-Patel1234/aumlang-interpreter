@@ -379,3 +379,80 @@ fn test_builtin_string_case_functions() {
         }
     }
 }
+
+#[test]
+fn test_identifier_and_assignment() {
+    let double_tests = [
+        // Basic identifier evaluation
+        ("let a = 5; a;", 5.0),
+        // Basic assignment
+        ("let a = 5; a = 9;", 9.0),
+        ("let a = 5; a = 5 + 4;", 9.0),
+        ("let a = 5; a = 9; a;", 9.0),
+        // Multiple reassignment
+        ("let a = 1; a = 2; a = 3; a;", 3.0),
+        // Assignment using another identifier
+        ("let a = 5; let b = 10; a = b + 2; a;", 12.0),
+        // Assignment using a more complex expression
+        ("let a = 0; a = 2 * 3 + 4;", 10.0),
+        ("let a = 0; a = (2 + 3) * 4;", 20.0),
+        ("let a = 10; a = a + 5;", 15.0),
+        ("let a = 10; a = a * 2;", 20.0),
+        // Chained assignment
+        ("let a = 0; let b = 0; a = (b = 9);", 9.0),
+        ("let a = 0; let b = 0; a = (b = 9); a;", 9.0),
+        ("let a = 0; let b = 0; a = (b = 9); b;", 9.0),
+        // Chained assignment with an expression
+        ("let a = 0; let b = 0; a = (b = 4 + 5);", 9.0),
+        ("let a = 0; let b = 0; a = (b = 2 * 3); a + b;", 12.0),
+    ];
+
+    for (input, expected) in double_tests {
+        test_double_object(test_eval(input), expected);
+    }
+
+    let string_tests = [
+        ("let a = \"hello\"; a;", "hello"),
+        ("let a = \"hello\"; a = \"world\";", "world"),
+        ("let a = \"hello\"; a = \"world\"; a;", "world"),
+    ];
+
+    for (input, expected) in string_tests {
+        assert!(
+            test_string_object(test_eval(input), expected),
+            "Expected StringObj with value {:?} for input: {}",
+            expected,
+            input
+        );
+    }
+
+    let boolean_tests = [
+        ("let a = true; a;", true),
+        ("let a = true; a = false;", false),
+        ("let a = false; a = true; a;", true),
+    ];
+
+    for (input, expected) in boolean_tests {
+        test_boolean_object(test_eval(input), expected);
+    }
+}
+#[test]
+fn test_assignment_to_undefined_identifier() {
+    let tests = [
+        ("a = 9;", "identifier not found: a"),
+        ("let a = 0; a = (b = 9);", "identifier not found: b"),
+    ];
+
+    for (input, expected_error) in tests {
+        match test_eval(input) {
+            Object::Error(error) => {
+                assert_eq!(
+                    error.msg, expected_error,
+                    "Unexpected error for input: {}",
+                    input
+                );
+            }
+            object => panic!("Expected error for input {}, got {}", input, object),
+        }
+    }
+}

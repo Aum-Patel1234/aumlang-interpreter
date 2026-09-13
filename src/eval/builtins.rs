@@ -121,8 +121,6 @@ pub static BUILTINS: &[(&str, Builtin)] = &[
 
 // Phase 2
 // ───────
-// upper()
-// lower()
 // trim()
 // contains()
 // substring()

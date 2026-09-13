@@ -47,6 +47,7 @@ pub enum Expression {
     IfExpression(IfExpression),
     FunctionLiteral(FunctionLiteral),
     CallExpression(CallExpression),
+    AssignmentExpression(AssignmentExpression),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
@@ -60,6 +61,9 @@ impl Node for Expression {
             Expression::FunctionLiteral(function_literal) => function_literal.token_literal(),
             Expression::CallExpression(call_expression) => call_expression.token_literal(),
             Expression::StringLiteral(string_literal) => string_literal.token_literal(),
+            Expression::AssignmentExpression(assignment_expression) => {
+                assignment_expression.token_literal()
+            }
         }
     }
 
@@ -74,6 +78,9 @@ impl Node for Expression {
             Expression::FunctionLiteral(function_literal) => function_literal.string(),
             Expression::CallExpression(call_expression) => call_expression.string(),
             Expression::StringLiteral(string_literal) => string_literal.string(),
+            Expression::AssignmentExpression(assignment_expression) => {
+                assignment_expression.string()
+            }
         }
     }
 }
@@ -185,6 +192,30 @@ impl Node for Boolean {
 
     fn string(&self) -> String {
         self.value.to_string()
+    }
+}
+
+// assignment (a = 9) if a is defined
+#[derive(Debug, Clone)]
+pub struct AssignmentExpression {
+    pub variable: Identifier,
+    pub expr: Box<Expression>,
+}
+impl AssignmentExpression {
+    pub fn new(variable: Identifier, expr: Expression) -> Self {
+        AssignmentExpression {
+            variable,
+            expr: Box::new(expr),
+        }
+    }
+}
+impl Node for AssignmentExpression {
+    fn token_literal(&self) -> String {
+        format!("{} = {}", self.variable.string(), self.expr.string())
+    }
+
+    fn string(&self) -> String {
+        format!("{} = {}", self.variable.string(), self.expr.string())
     }
 }
 
@@ -482,6 +513,9 @@ impl Node for ReturnStatement {
             }
             Expression::CallExpression(call_expression) => out.push_str(&call_expression.string()),
             Expression::StringLiteral(string_literal) => out.push_str(&string_literal.string()),
+            Expression::AssignmentExpression(assignment_expression) => {
+                out.push_str(&assignment_expression.string())
+            }
         }
         out.push(';');
 
@@ -515,6 +549,9 @@ impl Node for ExpressionStatement {
             Expression::FunctionLiteral(function_literal) => function_literal.string(),
             Expression::CallExpression(call_expression) => call_expression.string(),
             Expression::StringLiteral(string_literal) => string_literal.string(),
+            Expression::AssignmentExpression(assignment_expression) => {
+                assignment_expression.string()
+            }
         }
     }
 }
