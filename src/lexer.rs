@@ -117,6 +117,8 @@ impl<'a> Lexer<'a> {
             ')' => Token::RParen,
             '{' => Token::LBrace,
             '}' => Token::RBrace,
+            '[' => Token::LBracket,
+            ']' => Token::RBracket,
 
             ',' => Token::Comma,
             ';' => Token::Semicolon,

@@ -48,6 +48,8 @@ pub enum Expression {
     FunctionLiteral(FunctionLiteral),
     CallExpression(CallExpression),
     AssignmentExpression(AssignmentExpression),
+    ArrayExpression(ArrayExpression),
+    IndexExpression(IndexExpression),
 }
 impl Node for Expression {
     fn token_literal(&self) -> String {
@@ -64,6 +66,8 @@ impl Node for Expression {
             Expression::AssignmentExpression(assignment_expression) => {
                 assignment_expression.token_literal()
             }
+            Expression::ArrayExpression(array_expression) => array_expression.token_literal(),
+            Expression::IndexExpression(index_expression) => index_expression.token_literal(),
         }
     }
 
@@ -81,6 +85,8 @@ impl Node for Expression {
             Expression::AssignmentExpression(assignment_expression) => {
                 assignment_expression.string()
             }
+            Expression::ArrayExpression(array_expression) => array_expression.string(),
+            Expression::IndexExpression(index_expression) => index_expression.string(),
         }
     }
 }
@@ -192,6 +198,55 @@ impl Node for Boolean {
 
     fn string(&self) -> String {
         self.value.to_string()
+    }
+}
+#[derive(Debug, Clone)]
+pub struct ArrayExpression {
+    pub expressions: Vec<Expression>,
+}
+impl ArrayExpression {
+    pub fn new(expressions: Vec<Expression>) -> Self {
+        ArrayExpression { expressions }
+    }
+}
+impl Node for ArrayExpression {
+    fn token_literal(&self) -> String {
+        format!(
+            "{} {} {}",
+            Token::LBracket,
+            "list of tokens",
+            Token::RBracket
+        )
+    }
+
+    fn string(&self) -> String {
+        let mut string = "[".to_string();
+        for expr in &self.expressions {
+            string += &format!("{}, ", expr.string());
+        }
+        string + "]"
+    }
+}
+#[derive(Debug, Clone)]
+pub struct IndexExpression {
+    pub left: Box<Expression>,
+    pub index: Box<Expression>,
+}
+impl IndexExpression {
+    pub fn new(left: Expression, index: Expression) -> Self {
+        IndexExpression {
+            left: Box::new(left),
+            index: Box::new(index),
+        }
+    }
+}
+impl Node for IndexExpression {
+    fn token_literal(&self) -> String {
+        format!("{}[{}]", self.left.string(), self.index.string())
+    }
+
+    fn string(&self) -> String {
+        format!("({}[{}])", self.left.string(), self.index.string())
     }
 }
 
@@ -516,6 +571,12 @@ impl Node for ReturnStatement {
             Expression::AssignmentExpression(assignment_expression) => {
                 out.push_str(&assignment_expression.string())
             }
+            Expression::ArrayExpression(array_expression) => {
+                out.push_str(&array_expression.string())
+            }
+            Expression::IndexExpression(index_expression) => {
+                out.push_str(&index_expression.string())
+            }
         }
         out.push(';');
 
@@ -552,6 +613,8 @@ impl Node for ExpressionStatement {
             Expression::AssignmentExpression(assignment_expression) => {
                 assignment_expression.string()
             }
+            Expression::ArrayExpression(array_expression) => array_expression.string(),
+            Expression::IndexExpression(index_expression) => index_expression.string(),
         }
     }
 }

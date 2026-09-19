@@ -150,6 +150,7 @@ return false;
 10 != 9;
 "foobar"
 "foo bar"
+a = [five, 5, ten, add,  "foobar", true, false, null, +, ==]
 "#;
 
     let tests = vec![
@@ -237,6 +238,30 @@ return false;
         Token::Semicolon,
         Token::Value(Value::StringLiteral("foobar".to_string())),
         Token::Value(Value::StringLiteral("foo bar".to_string())),
+        // a = [five, 5, ten, add, "foobar", true, false, null, +, ^]
+        Token::Identifier("a".to_string()),
+        Token::Operator(Operator::Equal),
+        Token::LBracket,
+        Token::Identifier("five".to_string()),
+        Token::Comma,
+        Token::Value(Value::Double(5.0)),
+        Token::Comma,
+        Token::Identifier("ten".to_string()),
+        Token::Comma,
+        Token::Identifier("add".to_string()),
+        Token::Comma,
+        Token::Value(Value::StringLiteral("foobar".to_string())),
+        Token::Comma,
+        Token::Keyword(Keyword::TRUE),
+        Token::Comma,
+        Token::Keyword(Keyword::FALSE),
+        Token::Comma,
+        Token::Keyword(Keyword::NULL),
+        Token::Comma,
+        Token::Operator(Operator::Plus),
+        Token::Comma,
+        Token::Operator(Operator::EQ),
+        Token::RBracket,
         Token::EOF,
     ];
 

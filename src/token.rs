@@ -82,12 +82,12 @@ pub enum Token {
     Identifier(String),
 
     Operator(Operator),
-    LParen, // (
-    RParen, // )
-    LBrace, // {
-    RBrace, // }
-    // LBracket, // [
-    // RBracket, // ]
+    LParen,   // (
+    RParen,   // )
+    LBrace,   // {
+    RBrace,   // }
+    LBracket, // [
+    RBracket, // ]
     Semicolon,
     Comma,
     EOF,
@@ -115,6 +115,8 @@ pub enum TokenKind {
     RParen,
     LBrace,
     RBrace,
+    LBracket,
+    RBracket,
     Semicolon,
     Comma,
 
@@ -134,6 +136,8 @@ impl fmt::Display for Token {
             Token::RParen => write!(f, ")"),
             Token::LBrace => write!(f, "{{"),
             Token::RBrace => write!(f, "}}"),
+            Token::LBracket => write!(f, "["),
+            Token::RBracket => write!(f, "]"),
             Token::Semicolon => write!(f, "SEMICOLON"),
             Token::Comma => write!(f, "Comma"),
             Token::EOF => write!(f, "EOF"),
@@ -230,6 +234,8 @@ impl Token {
             Token::Value(Value::True) => TokenKind::True,
             Token::Value(Value::False) => TokenKind::False,
             Token::Value(Value::Null) => TokenKind::Null,
+            Token::LBracket => TokenKind::LBracket,
+            Token::RBracket => TokenKind::RBracket,
         }
     }
 }

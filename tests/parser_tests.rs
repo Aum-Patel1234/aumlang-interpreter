@@ -390,6 +390,14 @@ fn test_operator_precedence_parsing() {
             "add(a + b + c * d / f + g)",
             "add((((a + b) + ((c * d) / f)) + g))",
         ),
+        (
+            "a * [1, 2, 3, 4][b * c] * d",
+            "((a * ([Value::Double(1), Value::Double(2), Value::Double(3), Value::Double(4), ][(b * c)])) * d)",
+        ),
+        (
+            "add(a * b[2], b[1], 2 * [1, 2][1])",
+            "add((a * (b[Value::Double(2)])), (b[Value::Double(1)]), (Value::Double(2) * ([Value::Double(1), Value::Double(2), ][Value::Double(1)])))",
+        ),
     ];
 
     for (input, expected) in tests {
@@ -826,4 +834,54 @@ fn parse_assignment_expression() {
         Expression::DoubleLiteral(double_literal) => assert_eq!(double_literal.val, 9f64),
         _ => panic!("expected double_literal with value 9"),
     }
+}
+#[test]
+fn test_parsing_arrays() {
+    let input = "[1, 2 * 2, 3 + 3]";
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+    assert_eq!(program.statements.len(), 1);
+
+    let stmt = &program.statements[0];
+    let array_expression = match stmt {
+        Statement::Expression(expression_statement) => match &expression_statement.expression {
+            Expression::ArrayExpression(array_expression) => array_expression,
+            _ => panic!("expr is not an array_expression"),
+        },
+        _ => panic!("stmt is not an expression_statement"),
+    };
+
+    assert_eq!(array_expression.expressions.len(), 3);
+    let expr = &array_expression.expressions;
+    test_literal_expression(&expr[0], Value::Double(1.0));
+    test_infix_expression(&expr[1], Value::Double(2.0), "*", Value::Double(2.0));
+    test_infix_expression(&expr[2], Value::Double(3.0), "+", Value::Double(3.0));
+}
+#[test]
+fn parse_index_expression() {
+    let input = "myArray[1 + 1]";
+    let l = Lexer::new_lexer(input);
+    let mut p = Parser::new(l);
+    let program = p.parse_program();
+    assert!(p.check_parse_errors());
+    // assert_eq!(program.statements.len(), 1);
+
+    let stmt = &program.statements[0];
+    let index_expression = match stmt {
+        Statement::Expression(expression_statement) => match &expression_statement.expression {
+            Expression::IndexExpression(index_expression) => index_expression,
+            _ => panic!("expr is not an index_expression"),
+        },
+        _ => panic!("stmt is not an expression_statement"),
+    };
+
+    test_identifier(&index_expression.left, "myArray");
+    test_infix_expression(
+        &index_expression.index,
+        Value::Double(1.0),
+        "+",
+        Value::Double(1.0),
+    );
 }

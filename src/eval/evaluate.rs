@@ -148,6 +148,12 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
             env.borrow_mut().set(name.to_string(), value.clone());
             Some(value)
         }
+        Expression::ArrayExpression(_array_expression) => {
+            Some(Object::Double(DoubleObject { value: 1.0 }))
+        }
+        Expression::IndexExpression(_index_expression) => {
+            Some(Object::Double(DoubleObject { value: 1.0 }))
+        }
     }
 }
 fn apply_function(func: FunctionObject, args: Vec<Object>) -> Option<Object> {

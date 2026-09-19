@@ -4,10 +4,10 @@ use crate::{
     lexer::Lexer,
     parser::{
         ast::{
-            AssignmentExpression, BlockStatement, Boolean, CallExpression, DoubleLiteral,
-            Expression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression,
-            InfixExpression, LetStatement, PrefixExpression, Program, ReturnStatement, Statement,
-            StringLiteral,
+            ArrayExpression, AssignmentExpression, BlockStatement, Boolean, CallExpression,
+            DoubleLiteral, Expression, ExpressionStatement, FunctionLiteral, Identifier,
+            IfExpression, IndexExpression, InfixExpression, LetStatement, PrefixExpression,
+            Program, ReturnStatement, Statement, StringLiteral,
         },
         pratt_parser::{InfixParseFn, PrefixParseFn},
     },
@@ -24,6 +24,7 @@ pub enum OperatorPrecedence {
     Product,
     Prefix,
     Call,
+    Index,
 }
 
 pub struct Parser<'a> {
@@ -51,8 +52,6 @@ impl<'a> Parser<'a> {
         p.next_token();
         p.next_token();
 
-        // prefix_parse_fns
-        // p.register_prefix(TokenKind::Operator(Operator::Equal), Parser::parse_equal);
         p.register_prefix(TokenKind::Identifier, Parser::parse_identifier);
         p.register_prefix(TokenKind::Double, Parser::parse_double_literal);
         p.register_prefix(
@@ -66,6 +65,7 @@ impl<'a> Parser<'a> {
         p.register_prefix(TokenKind::Keyword(Keyword::TRUE), Parser::parse_boolean);
         p.register_prefix(TokenKind::Keyword(Keyword::FALSE), Parser::parse_boolean);
         p.register_prefix(TokenKind::LParen, Parser::parse_grouped_expression);
+        p.register_prefix(TokenKind::LBracket, Parser::parse_array);
         p.register_prefix(TokenKind::Keyword(Keyword::IF), Parser::parse_if_expression);
         p.register_prefix(
             TokenKind::Keyword(Keyword::FUNCTION),
@@ -73,11 +73,6 @@ impl<'a> Parser<'a> {
         );
         p.register_prefix(TokenKind::StringLiteral, Parser::parse_string_literal);
 
-        // infix_parse_fns
-        // p.register_infix(
-        //     TokenKind::Operator(Operator::Equal),
-        //     Parser::parse_infix_expression,
-        // );
         p.register_infix(
             TokenKind::Operator(Operator::Plus),
             Parser::parse_infix_expression,
@@ -119,6 +114,7 @@ impl<'a> Parser<'a> {
             Parser::parse_infix_expression,
         );
         p.register_infix(TokenKind::LParen, Parser::parse_function_call_expression);
+        p.register_infix(TokenKind::LBracket, Parser::parse_index_expression);
 
         p
     }
@@ -185,12 +181,15 @@ impl<'a> Parser<'a> {
         match &self.peek_token {
             Token::Operator(op) => op.precedence(),
             Token::LParen => OperatorPrecedence::Call,
+            Token::LBracket => OperatorPrecedence::Index,
             _ => OperatorPrecedence::Lowest,
         }
     }
     pub fn curr_precedence(&self) -> OperatorPrecedence {
         match &self.curr_token {
             Token::Operator(op) => op.precedence(),
+            Token::LParen => OperatorPrecedence::Call,
+            Token::LBracket => OperatorPrecedence::Index,
             _ => OperatorPrecedence::Lowest,
         }
     }
@@ -215,10 +214,8 @@ impl<'a> Parser<'a> {
                 }
             };
             self.next_token(); // skip ident
-            // println!("hree 1= {}", variable.value);
             self.next_token(); // skip =
             let expr = self.parse_expression(OperatorPrecedence::Lowest);
-            // println!("{:?}", expr);
             // NOTE: i am allowing things like (a = (b=10)) if i uncomment below that will be blocked
             // self.skip_to_semicolon();
             // if self.curr_token != Token::EOF && self.peek_token == Token::Semicolon {
@@ -269,6 +266,55 @@ impl<'a> Parser<'a> {
         }
         expr
     }
+    fn parse_expression_list(&mut self, end: Token) -> Option<Vec<Expression>> {
+        let mut expressions: Vec<Expression> = vec![];
+        if self.peek_token == end {
+            self.next_token(); // skip ], )
+            return Some(expressions);
+        }
+
+        self.next_token(); // skip first token eg: [, (
+        expressions.push(self.parse_expression(OperatorPrecedence::Lowest)?);
+
+        while self.peek_token == Token::Comma {
+            self.next_token(); // skip curr
+            self.next_token(); // skip ,
+            expressions.push(self.parse_expression(OperatorPrecedence::Lowest)?);
+        }
+
+        // println!("here - {}, next = {}", self.curr_token, self.peek_token);
+        if !self.expect_peek(end) {
+            return None;
+        }
+
+        Some(expressions)
+    }
+
+    fn parse_array(&mut self) -> Option<Expression> {
+        let expressions = self.parse_expression_list(Token::RBracket)?;
+        // for expr in &expressions {
+        //     println!("{}", expr.string());
+        // }
+        Some(Expression::ArrayExpression(ArrayExpression::new(
+            expressions,
+        )))
+    }
+
+    fn parse_index_expression(&mut self, left: Expression) -> Option<Expression> {
+        // println!("{}", self.curr_token);
+        self.next_token(); // skip [
+        // println!("left = {}", left.string());
+        let index = self.parse_expression(OperatorPrecedence::Lowest)?;
+        // println!("index = {}", index.string());
+        // println!("{}, next {}", self.curr_token, self.peek_token);
+        if !self.expect_peek(Token::RBracket) {
+            return None;
+        }
+        Some(Expression::IndexExpression(IndexExpression::new(
+            left, index,
+        )))
+    }
+
     fn parse_if_expression(&mut self) -> Option<Expression> {
         // if <condition> {consequence} else {alternative}
         if !self.expect_peek(Token::LParen) {
@@ -429,28 +475,28 @@ impl<'a> Parser<'a> {
 
     fn parse_function_call_expression(&mut self, left: Expression) -> Option<Expression> {
         // Eg: <expression>(<comma separated expressions>)
-        let right = self.parse_call_args()?;
+        let right = self.parse_expression_list(Token::RParen)?;
         Some(Expression::CallExpression(CallExpression::new(left, right)))
     }
-    fn parse_call_args(&mut self) -> Option<Vec<Expression>> {
-        self.next_token(); // skip (
-        let mut expressions: Vec<Expression> = Vec::new();
-        while self.curr_token != Token::RParen && self.curr_token != Token::EOF {
-            let expr = self.parse_expression(OperatorPrecedence::Lowest)?;
-            expressions.push(expr);
-
-            if self.peek_token == Token::RParen {
-                self.next_token();
-                break;
-            }
-            if !self.expect_peek(Token::Comma) {
-                return None;
-            }
-
-            self.next_token(); // move ahead ,
-        }
-        Some(expressions)
-    }
+    // fn parse_call_args(&mut self) -> Option<Vec<Expression>> {
+    //     self.next_token(); // skip (
+    //     let mut expressions: Vec<Expression> = Vec::new();
+    //     while self.curr_token != Token::RParen && self.curr_token != Token::EOF {
+    //         let expr = self.parse_expression(OperatorPrecedence::Lowest)?;
+    //         expressions.push(expr);
+    //
+    //         if self.peek_token == Token::RParen {
+    //             self.next_token();
+    //             break;
+    //         }
+    //         if !self.expect_peek(Token::Comma) {
+    //             return None;
+    //         }
+    //
+    //         self.next_token(); // move ahead ,
+    //     }
+    //     Some(expressions)
+    // }
 
     // parse program
     pub fn parse_program(&mut self) -> Program {
