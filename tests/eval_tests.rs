@@ -456,3 +456,101 @@ fn test_assignment_to_undefined_identifier() {
         }
     }
 }
+#[test]
+fn test_array_literals() {
+    let input = "[1, 2 * 2, 3 + 3]";
+
+    let evaluated = test_eval(input);
+
+    let array = match evaluated {
+        Object::Array(array) => array,
+        object => {
+            panic!("object is not Array. got={}", object);
+        }
+    };
+
+    assert_eq!(
+        array.arr.len(),
+        3,
+        "array has wrong number of elements. got={}",
+        array.arr.len()
+    );
+
+    assert!(test_double_object(
+        array.arr.get(0).expect("element 0 should exist"),
+        1.0
+    ));
+    assert!(test_double_object(
+        array.arr.get(1).expect("element 1 should exist"),
+        4.0
+    ));
+    assert!(test_double_object(
+        array.arr.get(2).expect("element 2 should exist"),
+        6.0
+    ));
+    assert!(array.arr.get(100).is_none());
+}
+#[test]
+fn test_array_index_expressions() {
+    enum Expected {
+        Double(f64),
+        Error(&'static str),
+    }
+
+    let tests = [
+        ("[1, 2, 3][0]", Expected::Double(1.0)),
+        ("[1, 2, 3][1]", Expected::Double(2.0)),
+        ("[1, 2, 3][2]", Expected::Double(3.0)),
+        ("let i = 0; [1][i];", Expected::Double(1.0)),
+        ("[1, 2, 3][1 + 1];", Expected::Double(3.0)),
+        (
+            "let myArray = [1, 2, 3]; myArray[2];",
+            Expected::Double(3.0),
+        ),
+        (
+            "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+            Expected::Double(6.0),
+        ),
+        (
+            "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+            Expected::Double(2.0),
+        ),
+        (
+            "[1, 2, 3][3]",
+            Expected::Error("Index out of bound: 3 max capacity = 3"),
+        ),
+        (
+            "[1, 2, 3][-1]",
+            Expected::Error("Index cannot be negative: -1"),
+        ),
+    ];
+
+    for (input, expected) in tests {
+        let evaluated = test_eval(input);
+
+        match expected {
+            Expected::Double(expected_value) => {
+                assert!(
+                    test_double_object(evaluated.clone(), expected_value),
+                    "expected {} for input `{}`, got {}",
+                    expected_value,
+                    input,
+                    evaluated
+                );
+            }
+
+            Expected::Error(expected_error) => match evaluated {
+                Object::Error(error_object) => {
+                    assert_eq!(
+                        error_object.msg, expected_error,
+                        "unexpected error for input `{}`",
+                        input
+                    );
+                }
+                object => {
+                    panic!("expected ERROR for input `{}`, got {}", input, object);
+                }
+            },
+        }
+    }
+}

@@ -1,8 +1,9 @@
 use crate::{
     consts::{LEN_FN_NAME, LOWER_FN_NAME, TYPE_FN_NAME, UPPER_FN_NAME},
     object::obj::{
-        BOOLEAN_OBJ, BUILTIN_OBJ, Builtin, DOUBLE_OBJ, DoubleObject, ERROR_OBJ, ErrorObject,
-        FUNCTION_OBJ, NULL_OBJ, Object, ObjectTrait, RETURN_VALUE_OBJ, STRING_OBJ, StringObject,
+        ARRAY_OBJ, BOOLEAN_OBJ, BUILTIN_OBJ, Builtin, DOUBLE_OBJ, DoubleObject, ERROR_OBJ,
+        ErrorObject, FUNCTION_OBJ, NULL_OBJ, Object, ObjectTrait, RETURN_VALUE_OBJ, STRING_OBJ,
+        StringObject,
     },
 };
 
@@ -54,6 +55,7 @@ fn builtin_type(args: &[Object]) -> Object {
         Object::Error(_) => ERROR_OBJ.to_lowercase(),
         Object::Function(_) => FUNCTION_OBJ.to_lowercase(),
         Object::Builtin(_) => BUILTIN_OBJ.to_lowercase(),
+        Object::Array(_) => ARRAY_OBJ.to_lowercase(),
     };
 
     Object::StringObj(StringObject { value: obj_type })

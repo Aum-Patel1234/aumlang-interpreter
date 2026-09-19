@@ -2,10 +2,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     environment::Environment,
-    eval::builtins::BUILTINS,
+    eval::{builtins::BUILTINS, vector::Vector},
     object::obj::{
-        BooleanObject, DoubleObject, ErrorObject, FunctionObject, NullObject, Object, ObjectTrait,
-        ReturnObject, StringObject,
+        ArrayObject, BooleanObject, DoubleObject, ErrorObject, FunctionObject, NullObject, Object,
+        ObjectTrait, ReturnObject, StringObject,
     },
     parser::ast::{
         BlockStatement, Expression, IfExpression, InfixExpression, LetStatement, PrefixExpression,
@@ -148,11 +148,64 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
             env.borrow_mut().set(name.to_string(), value.clone());
             Some(value)
         }
-        Expression::ArrayExpression(_array_expression) => {
-            Some(Object::Double(DoubleObject { value: 1.0 }))
+        Expression::ArrayExpression(array_expression) => {
+            let expressions = &array_expression.expressions;
+            let len = expressions.len();
+            let mut arr: Vector<Object> = Vector::new_with_capacity(len);
+            for expr in expressions {
+                let obj = eval_expression(expr, env.clone())?;
+                arr.push(obj);
+            }
+            Some(Object::Array(ArrayObject { arr }))
         }
-        Expression::IndexExpression(_index_expression) => {
-            Some(Object::Double(DoubleObject { value: 1.0 }))
+        Expression::IndexExpression(index_expression) => {
+            let arr_obj = match eval_expression(&index_expression.left, env.clone())? {
+                // Object::StringObj(string_object) => todo!(), if have time then support characters
+                // and array of characters
+                Object::Array(array_object) => array_object,
+                Object::Error(error_object) => return Some(Object::Error(error_object)),
+                o => {
+                    return Some(Object::Error(ErrorObject {
+                        msg: format!("expected Array found {}", o),
+                    }));
+                }
+            };
+
+            let idx = match eval_expression(&index_expression.index, env.clone())? {
+                // can do numpy like thingy
+                // Object::Array(array_object) => todo!(),
+                Object::Double(double_object) => {
+                    let value = double_object.value;
+
+                    if value < 0.0 {
+                        return Some(Object::Error(ErrorObject {
+                            msg: format!("Index cannot be negative: {}", value),
+                        }));
+                    }
+
+                    value as usize
+                }
+                Object::Error(error_object) => return Some(Object::Error(error_object)),
+                o => {
+                    return Some(Object::Error(ErrorObject {
+                        msg: format!(
+                            "expected index of object(currently DoubleObject) found {}",
+                            o
+                        ),
+                    }));
+                }
+            };
+
+            match arr_obj.get(idx) {
+                Some(o) => Some(o),
+                None => Some(Object::Error(ErrorObject {
+                    msg: format!(
+                        "Index out of bound: {} max capacity = {}",
+                        idx,
+                        arr_obj.len()
+                    ),
+                })),
+            }
         }
     }
 }

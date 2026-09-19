@@ -2,6 +2,7 @@ use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 use crate::{
     environment::Environment,
+    eval::vector::Vector,
     parser::{
         Node,
         ast::{BlockStatement, Identifier},
@@ -13,6 +14,7 @@ pub type ObjectType = String;
 pub const DOUBLE_OBJ: &str = "DOUBLE";
 pub const STRING_OBJ: &str = "STRING";
 pub const BOOLEAN_OBJ: &str = "BOOLEAN";
+pub const ARRAY_OBJ: &str = "ARRAY";
 pub const NULL_OBJ: &str = "NULL";
 pub const RETURN_VALUE_OBJ: &str = "RETURN_VALUE";
 pub const ERROR_OBJ: &str = "ERROR";
@@ -37,6 +39,7 @@ pub enum Object {
     Error(ErrorObject),
     Function(FunctionObject),
     Builtin(&'static Builtin),
+    Array(ArrayObject),
 }
 impl Display for Object {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -49,6 +52,7 @@ impl Display for Object {
             Object::Function(function_object) => function_object.inspect(),
             Object::StringObj(string_object) => string_object.inspect(),
             Object::Builtin(builtin) => builtin.inspect(),
+            Object::Array(array_object) => array_object.inspect(),
         };
         write!(f, "{}", s)
     }
@@ -64,6 +68,7 @@ impl ObjectTrait for Object {
             Object::Function(function_object) => function_object.object_type(),
             Object::StringObj(string_object) => string_object.object_type(),
             Object::Builtin(builtin) => builtin.object_type(),
+            Object::Array(array_object) => array_object.object_type(),
         }
     }
 
@@ -77,6 +82,7 @@ impl ObjectTrait for Object {
             Object::Function(function_object) => function_object.inspect(),
             Object::StringObj(string_object) => string_object.inspect(),
             Object::Builtin(builtin) => builtin.inspect(),
+            Object::Array(array_object) => array_object.inspect(),
         }
     }
 }
@@ -94,6 +100,40 @@ impl ObjectTrait for DoubleObject {
 
     fn inspect(&self) -> String {
         self.value.to_string()
+    }
+}
+
+// array
+#[derive(Clone)]
+pub struct ArrayObject {
+    pub arr: Vector<Object>,
+}
+impl ArrayObject {
+    pub fn get(&self, idx: usize) -> Option<Object> {
+        self.arr.get(idx)
+    }
+    pub fn len(&self) -> usize {
+        self.arr.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.arr.is_empty()
+    }
+}
+impl ObjectTrait for ArrayObject {
+    fn object_type(&self) -> ObjectType {
+        ARRAY_OBJ.to_string()
+    }
+
+    fn inspect(&self) -> String {
+        format!(
+            "[{}]",
+            self.arr
+                .get_elements_as_vec()
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
     }
 }
 
