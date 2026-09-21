@@ -123,7 +123,7 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
             }
             match fn_obj {
                 Object::Function(function_object) => apply_function(function_object, args),
-                Object::Builtin(builtin) => Some((builtin.func)(&args)),
+                Object::Builtin(builtin) => Some((builtin.func)(args)),
                 _ => None,
             }
         }
@@ -156,7 +156,7 @@ fn eval_expression(expr: &Expression, env: Rc<RefCell<Environment>>) -> Option<O
                 let obj = eval_expression(expr, env.clone())?;
                 arr.push(obj);
             }
-            Some(Object::Array(ArrayObject { arr }))
+            Some(Object::Array(ArrayObject::new(arr)))
         }
         Expression::IndexExpression(index_expression) => {
             let arr_obj = match eval_expression(&index_expression.left, env.clone())? {

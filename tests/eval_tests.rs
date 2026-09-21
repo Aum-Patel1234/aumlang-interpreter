@@ -470,25 +470,97 @@ fn test_array_literals() {
     };
 
     assert_eq!(
-        array.arr.len(),
+        array.arr.borrow().len(),
         3,
         "array has wrong number of elements. got={}",
-        array.arr.len()
+        array.arr.borrow().len()
     );
 
     assert!(test_double_object(
-        array.arr.get(0).expect("element 0 should exist"),
+        array.arr.borrow().get(0).expect("element 0 should exist"),
         1.0
     ));
     assert!(test_double_object(
-        array.arr.get(1).expect("element 1 should exist"),
+        array.arr.borrow().get(1).expect("element 1 should exist"),
         4.0
     ));
     assert!(test_double_object(
-        array.arr.get(2).expect("element 2 should exist"),
+        array.arr.borrow().get(2).expect("element 2 should exist"),
         6.0
     ));
-    assert!(array.arr.get(100).is_none());
+    assert!(array.arr.borrow().get(100).is_none());
+}
+#[test]
+fn test_array_append() {
+    let input = r#"
+        let a = [1, 2, 3];
+        append(a, 4, 5);
+        a
+    "#;
+
+    let evaluated = test_eval(input);
+
+    let array = match evaluated {
+        Object::Array(array) => array,
+        object => {
+            panic!("object is not Array. got={}", object);
+        }
+    };
+
+    let arr = array.arr.borrow();
+
+    assert_eq!(
+        arr.len(),
+        5,
+        "array should have 5 elements after append. got={}",
+        arr.len()
+    );
+
+    assert!(test_double_object(
+        arr.get(0).expect("element 0 should exist"),
+        1.0
+    ));
+
+    assert!(test_double_object(
+        arr.get(1).expect("element 1 should exist"),
+        2.0
+    ));
+
+    assert!(test_double_object(
+        arr.get(2).expect("element 2 should exist"),
+        3.0
+    ));
+
+    assert!(test_double_object(
+        arr.get(3).expect("element 3 should exist"),
+        4.0
+    ));
+
+    assert!(test_double_object(
+        arr.get(4).expect("element 4 should exist"),
+        5.0
+    ));
+
+    assert!(arr.get(100).is_none());
+}
+#[test]
+fn test_len() {
+    let tests = [
+        (r#"len([1, 2, 3])"#, 3.0),
+        (r#"len([])"#, 0.0),
+        (r#"len(append([1, 2], 3))"#, 3.0),
+    ];
+
+    for (input, expected) in tests {
+        let evaluated = test_eval(input);
+
+        assert!(
+            test_double_object(evaluated, expected),
+            "expected {} for input `{}`",
+            expected,
+            input
+        );
+    }
 }
 #[test]
 fn test_array_index_expressions() {

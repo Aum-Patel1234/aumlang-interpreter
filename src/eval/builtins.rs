@@ -1,5 +1,5 @@
 use crate::{
-    consts::{LEN_FN_NAME, LOWER_FN_NAME, TYPE_FN_NAME, UPPER_FN_NAME},
+    consts::{APPEND_FN_NAME, LEN_FN_NAME, LOWER_FN_NAME, TYPE_FN_NAME, UPPER_FN_NAME},
     object::obj::{
         ARRAY_OBJ, BOOLEAN_OBJ, BUILTIN_OBJ, Builtin, DOUBLE_OBJ, DoubleObject, ERROR_OBJ,
         ErrorObject, FUNCTION_OBJ, NULL_OBJ, Object, ObjectTrait, RETURN_VALUE_OBJ, STRING_OBJ,
@@ -28,18 +28,29 @@ pub fn check_single_str_arg<'a>(
     }
 }
 
-fn builtin_len(args: &[Object]) -> Object {
-    let s = match check_single_str_arg(args, "len") {
-        Ok(s) => s,
-        Err(o) => return Object::Error(o),
-    };
-
-    Object::Double(DoubleObject {
-        value: s.value.len() as f64,
-    })
+fn builtin_len(args: Vec<Object>) -> Object {
+    if args.len() != 1 {
+        return Object::Error(ErrorObject::new(format!(
+            "Expected one string argument in builtin {}() func got {} args",
+            LEN_FN_NAME,
+            args.len(),
+        )));
+    }
+    match &args[0] {
+        Object::StringObj(so) => Object::Double(DoubleObject {
+            value: so.value.len() as f64,
+        }),
+        Object::Array(array_object) => Object::Double(DoubleObject {
+            value: array_object.len() as f64,
+        }),
+        o => Object::Error(ErrorObject::new(format!(
+            "Expected string got {}",
+            o.object_type()
+        ))),
+    }
 }
 
-fn builtin_type(args: &[Object]) -> Object {
+fn builtin_type(args: Vec<Object>) -> Object {
     if args.len() != 1 {
         return Object::Error(ErrorObject::new(format!(
             "Expected one string argument in builtin len() func got {} args",
@@ -61,8 +72,8 @@ fn builtin_type(args: &[Object]) -> Object {
     Object::StringObj(StringObject { value: obj_type })
 }
 
-fn builtin_lower(args: &[Object]) -> Object {
-    let s = match check_single_str_arg(args, LOWER_FN_NAME) {
+fn builtin_lower(args: Vec<Object>) -> Object {
+    let s = match check_single_str_arg(&args, LOWER_FN_NAME) {
         Ok(s) => s.value.as_str(),
         Err(o) => return Object::Error(o),
     };
@@ -82,8 +93,8 @@ fn builtin_lower(args: &[Object]) -> Object {
         value: String::from_utf8_lossy(&lower_str).into_owned(),
     })
 }
-fn builtin_upper(args: &[Object]) -> Object {
-    let s = match check_single_str_arg(args, UPPER_FN_NAME) {
+fn builtin_upper(args: Vec<Object>) -> Object {
+    let s = match check_single_str_arg(&args, UPPER_FN_NAME) {
         Ok(s) => s.value.as_str(),
         Err(o) => return Object::Error(o),
     };
@@ -103,6 +114,54 @@ fn builtin_upper(args: &[Object]) -> Object {
         value: String::from_utf8_lossy(&lower_str).into_owned(),
     })
 }
+fn builtin_append(mut args: Vec<Object>) -> Object {
+    if args.len() < 2 {
+        return Object::Error(ErrorObject {
+            msg: format!("builtin function {}() takes 2 or more args", APPEND_FN_NAME),
+        });
+    }
+    let array = match args.remove(0) {
+        Object::Array(array_object) => array_object,
+        _ => {
+            return Object::Error(ErrorObject {
+                msg: format!(
+                    "builtin function {}() expects first argument to be an Array Object",
+                    APPEND_FN_NAME
+                ),
+            });
+        }
+    };
+    {
+        let mut arr = array.arr.borrow_mut();
+        // NOTE: small bug here if ther is let say append(arr, 2,append)
+        // as append in builtin func it will throw err but will add 2 as it was previously added
+        for obj in args {
+            match &obj {
+                Object::Double(_) => {}
+                Object::StringObj(_) => {}
+                Object::Boolean(_) => {}
+                Object::Null(_) => {}
+                Object::Function(_) => {}
+                Object::Array(_) => {}
+                o => {
+                    //not allowed remaining tyeps
+                    return Object::Error(ErrorObject {
+                        msg: format!(
+                            "builtin function {}() does not allow value of type {} to be added to the array.",
+                            APPEND_FN_NAME, o
+                        ),
+                    });
+                }
+            };
+            arr.push(obj);
+        }
+    }
+    Object::Array(array)
+}
+
+// fn builtin_pop(mut args: Vec<Object>) -> Object {
+//     todo!()
+// }
 
 pub static BUILTINS: &[(&str, Builtin)] = &[
     (LEN_FN_NAME, Builtin { func: builtin_len }),
@@ -117,6 +176,12 @@ pub static BUILTINS: &[(&str, Builtin)] = &[
         UPPER_FN_NAME,
         Builtin {
             func: builtin_upper,
+        },
+    ),
+    (
+        APPEND_FN_NAME,
+        Builtin {
+            func: builtin_append,
         },
     ),
 ];
@@ -145,8 +210,6 @@ pub static BUILTINS: &[(&str, Builtin)] = &[
 // Phase 5
 // ───────
 // arrays/lists
-//     append()
-//     pop()
 //     sort()
 //     reverse()
 //

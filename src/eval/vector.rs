@@ -5,7 +5,7 @@ use std::{
 
 const INITIAL_CAPACITY: usize = 4;
 
-#[derive(Clone)]
+// #[derive(Clone)] causes seg fault cause it copies pointer not allocation if reallocated
 pub struct Vector<T> {
     data: *mut T,
     len: usize,

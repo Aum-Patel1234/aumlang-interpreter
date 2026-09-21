@@ -18,6 +18,9 @@ pub const LEN_FN_NAME: &str = "len";
 pub const TYPE_FN_NAME: &str = "type";
 pub const LOWER_FN_NAME: &str = "lower";
 pub const UPPER_FN_NAME: &str = "upper";
+pub const REST_FN_NAME: &str = "rest";
+pub const APPEND_FN_NAME: &str = "append";
+pub const POP_FN_NAME: &str = "pop";
 
 pub fn look_keyword(identifier: &str) -> Option<Keyword> {
     match identifier {

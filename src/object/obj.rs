@@ -106,17 +106,25 @@ impl ObjectTrait for DoubleObject {
 // array
 #[derive(Clone)]
 pub struct ArrayObject {
-    pub arr: Vector<Object>,
+    pub arr: Rc<RefCell<Vector<Object>>>,
 }
 impl ArrayObject {
+    pub fn new(arr: Vector<Object>) -> Self {
+        ArrayObject {
+            arr: Rc::new(RefCell::new(arr)),
+        }
+    }
     pub fn get(&self, idx: usize) -> Option<Object> {
-        self.arr.get(idx)
+        self.arr.borrow().get(idx)
     }
     pub fn len(&self) -> usize {
-        self.arr.len()
+        self.arr.borrow().len()
     }
     pub fn is_empty(&self) -> bool {
-        self.arr.is_empty()
+        self.arr.borrow().is_empty()
+    }
+    pub fn push(&mut self, obj: Object) {
+        self.arr.borrow_mut().push(obj);
     }
 }
 impl ObjectTrait for ArrayObject {
@@ -128,6 +136,7 @@ impl ObjectTrait for ArrayObject {
         format!(
             "[{}]",
             self.arr
+                .borrow_mut()
                 .get_elements_as_vec()
                 .iter()
                 .map(ToString::to_string)
@@ -276,7 +285,7 @@ impl ObjectTrait for FunctionObject {
     }
 }
 
-pub type BuiltinFunction = fn(args: &[Object]) -> Object;
+pub type BuiltinFunction = fn(args: Vec<Object>) -> Object;
 
 #[derive(Clone)]
 pub struct Builtin {
